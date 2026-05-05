@@ -322,6 +322,20 @@ class Agent:
             self.state.test_output = output
             return output
 
+        elif action_name == "lint_code":
+            path = self._resolve_path(action_arg)
+            exit_code, output = lint_code(path)
+            return output
+            
+        elif action_name == "list_files":
+            path = self._resolve_path(action_arg)
+            files = list_files(path)
+            if not files:
+                return f"[INFO] No .py files found in {action_arg}"
+            # Return relative paths for readability
+            rel_files = [os.path.relpath(f, self.state.project_root) for f in files]
+            return f"Found {len(rel_files)} files: " + ", ".join(rel_files[:20])
+
         else:
             return f"[ERROR] Unknown action: {action_name}"
 
