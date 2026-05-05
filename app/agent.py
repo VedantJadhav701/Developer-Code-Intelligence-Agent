@@ -46,6 +46,7 @@ STRATEGY:
 2. Use 'lint_code' to find syntax errors or style issues.
 3. Use 'search_code' with a SHORT keyword (e.g., "divide") to find code.
 4. Use 'read_file' to understand the code before fixing.
+5. To CREATE a new file, call 'read_file' on the new path (it will return an error), then in the next step, the system will ask you for the content.
 
 Reply in this EXACT format (two lines only):
 THOUGHT: <your reasoning>
@@ -141,7 +142,7 @@ class Agent:
         # STEP 3 — GENERATE FIX (if we have a file in context)
         code_fix = ""
         review_text = ""
-        if self.state.current_file and action_name in ("read_file", "search_code"):
+        if self.state.current_file and action_name in ("read_file", "search_code", "write_file"):
             code_fix = self._generate_fix()
             self.state.last_code_fix = code_fix
 
@@ -283,15 +284,18 @@ class Agent:
         elif action_name == "read_file":
             path = self._resolve_path(action_arg)
             content = read_file(path)
-            if not content.startswith("[ERROR]"):
-                self.state.current_file = path
-                self.state.current_file_content = content
+            # Set context even if it's an error (allows creating new files)
+            self.state.current_file = path
+            self.state.current_file_content = "" if content.startswith("[ERROR] File not found") else content
             return content
 
         elif action_name == "write_file":
-            # write_file via action is handled in the fix+review pipeline
-            # If called directly, we just note it
-            return "write_file called — use generate_fix pipeline instead."
+            # Set context and let the loop's fix generator handle it
+            path = self._resolve_path(action_arg)
+            self.state.current_file = path
+            if not self.state.current_file_content:
+                 self.state.current_file_content = ""
+            return f"[OK] Targeting {path} for writing. Content will be generated in the next step."
 
         elif action_name == "run_tests":
             exit_code, output = run_tests(self.state.project_root)
