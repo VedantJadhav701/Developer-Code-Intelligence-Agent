@@ -34,16 +34,21 @@ Previous attempts: {attempts}
 {history_summary}
 
 Decide the SINGLE next action. Choose ONE:
-- search_code: <keyword>  (example: search_code: divide   -- use a SHORT keyword, NOT a file path)
+- list_files: <relative_path> (example: list_files: .)
+- search_code: <keyword>  (example: search_code: divide)
 - read_file: <relative_path>  (example: read_file: calculator.py)
 - write_file: <relative_path>  (example: write_file: calculator.py)
 - run_tests  (no argument needed)
+- lint_code: <relative_path>  (example: lint_code: calculator.py)
 
-IMPORTANT: For search_code, use a SHORT keyword like "divide" or "def add", NOT a file path.
-IMPORTANT: For read_file, use a RELATIVE path like "calculator.py", NOT an absolute path.
+STRATEGY:
+1. If you don't know where the bug is, use 'run_tests' first to find failing files.
+2. Use 'lint_code' to find syntax errors or style issues.
+3. Use 'search_code' with a SHORT keyword (e.g., "divide") to find code.
+4. Use 'read_file' to understand the code before fixing.
 
 Reply in this EXACT format (two lines only):
-THOUGHT: <your brief reasoning>
+THOUGHT: <your reasoning>
 ACTION: <tool_name>: <argument>
 """
 
@@ -57,11 +62,13 @@ CURRENT CODE:
 {error_context}
 
 RULES:
-1. Output the COMPLETE corrected file content
-2. ONLY fix what is needed — do NOT add new functions, classes, or imports
-3. Keep the SAME file structure and function signatures
-4. If a test expects a specific error message, use EXACTLY that message
-5. Output ONLY Python code — no markdown fences, no explanations, no comments about the fix
+1. Output the COMPLETE corrected file content from the VERY FIRST LINE to the LAST.
+2. DO NOT omit any functions, classes, or imports, even if they don't need fixing.
+3. ONLY fix what is needed — do NOT add new functions, classes, or imports.
+4. Keep the SAME file structure and function signatures.
+5. If a test expects a specific error message, use EXACTLY that message.
+6. Output ONLY Python code — no markdown fences, no explanations, no comments about what you fixed.
+7. Your output must be valid Python code that can be run immediately.
 """
 
 EXTRACT_ACTION_PATTERN = re.compile(
@@ -152,7 +159,17 @@ class Agent:
         self.state.test_exit_code = test_exit
         self.state.test_output = test_output
 
-        status = "success" if test_exit == 0 else "fail"
+        # Debug print
+        print(f"  [DEBUG] Pytest exit code: {test_exit}")
+
+        # Determine success
+        if test_exit == 0:
+            if "collected 0 items" in test_output:
+                status = "fail"  # No tests found/run, likely collection error
+            else:
+                status = "success"
+        else:
+            status = "fail"
 
         # Log this step
         self.logger.log_step(

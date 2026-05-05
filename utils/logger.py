@@ -73,7 +73,7 @@ class AgentLogger:
         print("=" * 60)
         print(f"  THOUGHT:     {entry['thought'][:200]}")
         print(f"  ACTION:      {entry['action'][:200]}")
-        print(f"  OBSERVATION: {entry['observation'][:200]}")
+        print(f"  OBSERVATION: {entry['observation'][:1000]}")
         print(f"  REVIEW:      {entry['review'][:200]}")
         print(f"  TEST RESULT: {entry['test_result'][:200]}")
         print("=" * 60)

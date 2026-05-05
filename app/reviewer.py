@@ -9,7 +9,8 @@ from app.llm import query
 
 REVIEW_SYSTEM = (
     "You are a strict code reviewer. "
-    "Review the proposed code fix for correctness, edge cases, and style. "
+    "Review the proposed code fix for correctness, edge cases, and syntax. "
+    "CRITICAL: If the code has a SyntaxError (like missing 'return', incomplete expressions, or unclosed blocks), you MUST return REVISE. "
     "Respond with EXACTLY one line:\n"
     "  APPROVED\n"
     "or\n"

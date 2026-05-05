@@ -19,7 +19,7 @@ def run_tests(project_root: str = ".", test_path: str = "") -> tuple[int, str]:
         (exit_code, output_text)
         exit_code 0 = all tests passed.
     """
-    cmd = ["python", "-m", "pytest", "-v", "--tb=short", "-q"]
+    cmd = ["python", "-m", "pytest", "-v", "--tb=short"]
     if test_path:
         cmd.append(test_path)
 
