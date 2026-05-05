@@ -24,7 +24,8 @@ from app.agent import Agent
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Developer Code Intelligence Agent — autonomous coding agent powered by Ollama",
+        description="DevAgent — A smart, autonomous local developer powered by Ollama.\n"
+                    "Analyzes project context and solves complex coding tasks offline.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""\
 Examples:
@@ -93,6 +94,33 @@ Examples:
         print(f"  Last file:  {final_state.current_file}")
     print(f"  Log file:   {os.path.join(root, 'logs', 'run.json')}")
     print("-" * 60)
+
+    # Automatic Git Management
+    if final_state.status == "success":
+        print("\n[GIT] Task successful. Staging changes...")
+        try:
+            # Check if it's a git repo
+            import subprocess
+            is_repo = subprocess.run(["git", "rev-parse", "--is-inside-work-tree"], 
+                                     cwd=root, capture_output=True, text=True).returncode == 0
+            
+            if is_repo:
+                subprocess.run(["git", "add", "-A"], cwd=root)
+                commit_msg = f"agent fix: {args.task[:50]}..."
+                subprocess.run(["git", "commit", "-m", commit_msg], cwd=root)
+                print(f"[GIT] Committed: {commit_msg}")
+                
+                # Try to push
+                print("[GIT] Pushing to remote...")
+                push_res = subprocess.run(["git", "push"], cwd=root, capture_output=True, text=True)
+                if push_res.returncode == 0:
+                    print("[GIT] Successfully pushed to remote.")
+                else:
+                    print(f"[GIT] Push failed (perhaps no remote set?): {push_res.stderr.strip()}")
+            else:
+                print("[GIT] Not a git repository. Skipping commit.")
+        except Exception as e:
+            print(f"[GIT] Error during git operations: {e}")
 
     return 0 if final_state.status == "success" else 1
 

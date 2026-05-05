@@ -73,7 +73,7 @@ RULES:
 """
 
 EXTRACT_ACTION_PATTERN = re.compile(
-    r"ACTION:\s*(search_code|read_file|write_file|run_tests)\s*:?\s*(.*)",
+    r"ACTION:\s*(search_code|read_file|write_file|run_tests|lint_code|list_files)\s*:?\s*(.*)",
     re.IGNORECASE,
 )
 
@@ -89,12 +89,31 @@ class Agent:
         )
         self.logger = AgentLogger(log_dir=os.path.join(project_root, "logs"))
 
+    def _initial_scan(self):
+        """Identify key files to give the agent immediate context."""
+        files = list_files(self.state.project_root, extension=".py")
+        if files:
+            # Filter to show only relative paths for the agent
+            rel_files = [os.path.relpath(f, self.state.project_root) for f in files]
+            self.state.history.append({
+                "step": 0,
+                "thought": "Initializing project scan.",
+                "action": "system_scan",
+                "observation": f"Found {len(rel_files)} Python files: {', '.join(rel_files[:10])}{'...' if len(rel_files) > 10 else ''}",
+                "review": "",
+                "test_result": "",
+                "status": "info"
+            })
+
     # ── Public entry point ───────────────────────────────────────────────
 
     def run(self) -> AgentState:
         """Execute the full agent loop. Returns final state."""
         self.state.status = "running"
         self.logger.log_event("agent_start", {"task": self.state.task})
+        
+        # Immediate awareness of project structure
+        self._initial_scan()
 
         print("\n" + "=" * 60)
         print("  DEVELOPER CODE INTELLIGENCE AGENT")
@@ -360,14 +379,23 @@ class Agent:
         if not self.state.history:
             return "No previous actions."
 
-        lines = ["PREVIOUS ACTIONS:"]
-        for h in self.state.history[-3:]:  # last 3 steps
+        lines = ["PROJECT CONTEXT:"]
+        # Include scan results if present
+        scan_step = next((h for h in self.state.history if h["action"] == "system_scan"), None)
+        if scan_step:
+            lines.append(f"  {scan_step['observation']}")
+
+        lines.append("\nPREVIOUS ACTIONS:")
+        # Only show last 3 REAL steps (excluding scan)
+        real_steps = [h for h in self.state.history if h["action"] != "system_scan"]
+        for h in real_steps[-3:]:
             lines.append(
                 f"  Step {h['step']}: {h['action']}({h.get('action_arg', '')}) "
-                f"-> {h['test_status']}"
+                f"-> {h.get('status', 'info')}"
             )
+            
         if self.state.test_output and self.state.test_exit_code != 0:
-            lines.append(f"LAST TEST ERROR:\n{self.state.test_output[:500]}")
+            lines.append(f"\nLAST TEST ERROR:\n{self.state.test_output[:500]}")
 
         return "\n".join(lines)
 
