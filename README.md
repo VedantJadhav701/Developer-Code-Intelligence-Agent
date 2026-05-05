@@ -212,6 +212,8 @@ Developer-Code-Intelligence-Agent/
 │   └── test_runner.py      # pytest & flake8 runner
 ├── utils/
 │   └── logger.py           # Structured JSON logger
+├── docs/
+│   └── USER_GUIDE.md       # Full usage guide with examples
 ├── demo_project/           # Sample buggy project for testing
 │   ├── calculator.py       #   └─ has intentional divide-by-zero bug
 │   └── test_calculator.py  #   └─ 5 tests (1 fails until fixed)
@@ -227,15 +229,59 @@ Developer-Code-Intelligence-Agent/
 
 ---
 
-## 💻 Usage
+## 💻 Use It on YOUR Project
 
-### Basic
+### Step 1: Clone DevAgent (one-time)
 
 ```bash
-python main.py --task "Fix the failing test" --root ./my_project
+git clone https://github.com/VedantJadhav701/Developer-Code-Intelligence-Agent.git
+cd Developer-Code-Intelligence-Agent
+pip install -r requirements.txt
+ollama pull qwen2.5:3b   # if not already pulled
 ```
 
-### All Options
+### Step 2: Point it at your project
+
+```bash
+python main.py --task "DESCRIBE THE BUG OR TASK" --root /path/to/your/project
+```
+
+### Step 3: That's it — the agent works autonomously
+
+It will search → read → fix → review → test → done.
+
+### Real-World Examples
+
+```bash
+# Fix a specific bug
+python main.py -t "Fix the TypeError in user_service.py" -r ./backend
+
+# Fix a failing test
+python main.py -t "Fix test_create_user so it validates email format" -r ./api
+
+# Add error handling
+python main.py -t "Add try-except to the database connection in db.py" -r ./server
+
+# Handle edge cases
+python main.py -t "Handle empty list in process_batch function" -r ./pipeline
+
+# Use a stronger model for complex tasks
+python main.py -t "Refactor auth middleware to use JWT" -r ./api --model mistral:7b
+
+# More retry attempts for hard bugs
+python main.py -t "Make all tests pass" -r ./my-project --max-steps 5
+```
+
+### What your project needs
+
+| Requirement | Why |
+|---|---|
+| Python files (`.py`) | Agent searches and edits `.py` files |
+| pytest tests | Agent runs `pytest` to verify its fixes |
+
+> **Tip:** Always use `git stash` before running the agent, so you can `git diff` to see exactly what it changed.
+
+### All CLI Options
 
 | Flag | Default | Description |
 |---|---|---|
@@ -244,21 +290,7 @@ python main.py --task "Fix the failing test" --root ./my_project
 | `--max-steps`, `-m` | `3` | Max ReAct iterations |
 | `--model` | `qwen2.5:3b` | Any Ollama model |
 
-### Examples
-
-```bash
-# Fix a specific bug
-python main.py -t "Fix the TypeError in user_service.py" -r ./backend
-
-# Add error handling
-python main.py -t "Add input validation to the create_user function" -r ./api
-
-# Make tests pass
-python main.py -t "Make all tests in test_auth.py pass" -r ./project
-
-# Use a different model
-python main.py -t "Refactor the database module" -r ./app --model mistral:7b
-```
+> 📖 **[Full User Guide →](docs/USER_GUIDE.md)** — Detailed examples, tips, troubleshooting, and FAQ
 
 ---
 
