@@ -56,7 +56,12 @@ CURRENT CODE:
 
 {error_context}
 
-Write the COMPLETE corrected file content. Output ONLY Python code, no markdown fences, no explanations.
+RULES:
+1. Output the COMPLETE corrected file content
+2. ONLY fix what is needed — do NOT add new functions, classes, or imports
+3. Keep the SAME file structure and function signatures
+4. If a test expects a specific error message, use EXACTLY that message
+5. Output ONLY Python code — no markdown fences, no explanations, no comments about the fix
 """
 
 EXTRACT_ACTION_PATTERN = re.compile(

@@ -1,3 +1,8 @@
+"""
+Demo project: A simple calculator with an intentional bug for the agent to fix.
+"""
+
+
 def add(a, b):
     return a + b
 
@@ -11,13 +16,7 @@ def multiply(a, b):
 
 
 def divide(a, b):
-    # CORRECTED: Guard against division by zero
+    # BUG: No zero-division guard
     if b == 0:
-        raise ValueError("Division by zero is not allowed.")
+        raise ValueError('Cannot divide by zero')
     return a / b
-
-# Test function to ensure the calculator works as expected
-def test_divide_by_zero():
-    with pytest.raises(ValueError) as e_info:
-        divide(10, 0)
-    assert str(e_info.value) == "Division by zero is not allowed."
