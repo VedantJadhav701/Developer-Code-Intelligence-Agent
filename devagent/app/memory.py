@@ -19,9 +19,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from utils.config import (
-    SUPPORTED_EXTENSIONS, IGNORE_DIRS, MAX_FILE_SIZE_BYTES,
-    MAX_CHUNK_CHARS, TOP_K_RETRIEVAL,
+from devagent.utils.config import (
+    CHUNK_SIZE,
+    CHUNK_OVERLAP,
+    SUPPORTED_EXTENSIONS,
+    IGNORE_DIRS,
+    MAX_FILE_SIZE_BYTES,
+    MAX_CHUNK_CHARS,
+    TOP_K_RETRIEVAL,
 )
 
 # ── Lazy imports for optional heavy deps ──────────────────────────────────────

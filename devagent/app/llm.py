@@ -13,7 +13,7 @@ from __future__ import annotations
 import time
 import ollama
 
-from utils.config import MODELS, DEFAULT_INFERENCE_OPTIONS
+from devagent.utils.config import MODELS, DEFAULT_INFERENCE_OPTIONS
 
 # ── Configuration (mutable at runtime via CLI) ───────────────────────────────
 MODEL = MODELS["primary"]

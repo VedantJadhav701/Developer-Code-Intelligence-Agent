@@ -17,7 +17,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from utils.config import IGNORE_DIRS, SUPPORTED_EXTENSIONS
+from devagent.utils.config import IGNORE_DIRS, SUPPORTED_EXTENSIONS
 
 
 class SandboxManager:

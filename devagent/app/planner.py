@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from app.llm import query
+from devagent.app.llm import query
 
 
 PLAN_PROMPT = """\

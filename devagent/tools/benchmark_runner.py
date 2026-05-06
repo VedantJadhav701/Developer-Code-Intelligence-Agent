@@ -131,7 +131,7 @@ def run_benchmarks(benchmarks_dir: str, model: str = "qwen2.5-coder:3b",
                    max_steps: int = 5) -> BenchmarkReport:
     """Run all benchmarks and return a report."""
     # Import here to avoid circular imports
-    from app.agent import Agent
+    from devagent.app.agent import Agent
 
     report = BenchmarkReport(model=model)
     suites = discover_benchmarks(benchmarks_dir)

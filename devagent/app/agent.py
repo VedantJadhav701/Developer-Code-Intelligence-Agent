@@ -22,21 +22,21 @@ import os
 import time
 from typing import Any
 
-from app.llm import query, query_with_context
-from app.reviewer import review_code, revise_code
-from app.state import AgentState
-from app.planner import generate_plan
-from app.patcher import generate_diff, apply_patch, format_diff_summary
-from app.memory import WorkingMemory, chunk_project, SemanticIndex
-from tools.search import search_code
-from tools.file_ops import read_file, write_file, list_files
-from tools.test_runner import run_tests
-from tools.linter import lint_code
-from tools.git_tools import git_diff, git_status
-from tools.semantic_search import semantic_search, build_index, get_relevant_chunks
-from tools.surgical_patcher import apply_surgical_patch
-from utils.logger import AgentLogger
-from utils.metrics import RunMetrics, Timer
+from devagent.app.llm import query, query_with_context
+from devagent.app.reviewer import review_code, revise_code
+from devagent.app.state import AgentState
+from devagent.app.planner import generate_plan
+from devagent.app.patcher import generate_diff, apply_patch, format_diff_summary
+from devagent.app.memory import WorkingMemory, chunk_project, SemanticIndex
+from devagent.tools.search import search_code
+from devagent.tools.file_ops import read_file, write_file, list_files
+from devagent.tools.test_runner import run_tests
+from devagent.tools.linter import lint_code
+from devagent.tools.git_tools import git_diff, git_status
+from devagent.tools.semantic_search import semantic_search, build_index, get_relevant_chunks
+from devagent.tools.surgical_patcher import apply_surgical_patch
+from devagent.utils.logger import AgentLogger
+from devagent.utils.metrics import RunMetrics, Timer
 
 
 # ── Prompt templates (kept SHORT for small models) ───────────────────────────
@@ -645,5 +645,5 @@ class Agent:
 
     def _get_model(self) -> str:
         """Get the current model name."""
-        from app.llm import MODEL
+        from devagent.app.llm import MODEL
         return MODEL

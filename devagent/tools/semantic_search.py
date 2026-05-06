@@ -6,7 +6,7 @@ Falls back to keyword search if dependencies aren't installed.
 
 from __future__ import annotations
 
-from app.memory import SemanticIndex, CodeChunk, chunk_project
+from devagent.app.memory import SemanticIndex, CodeChunk, chunk_project
 
 
 # Module-level singleton index

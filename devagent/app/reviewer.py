@@ -5,7 +5,7 @@ The LLM critiques its own code fix and returns APPROVED or REVISE + reason.
 
 from __future__ import annotations
 
-from app.llm import query
+from devagent.app.llm import query
 
 REVIEW_SYSTEM = (
     "You are a strict code reviewer. "
