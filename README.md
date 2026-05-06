@@ -3,10 +3,12 @@
 # 🧠 DevAgent
 ### Execution-Grounded Orchestration for Autonomous Local Coding.
 
+[**🌐 Live Site**](https://devagent-cli.vercel.app/) • [**📦 PyPI**](https://pypi.org/project/devagent-cli/) • [**📜 Docs**](https://devagent-cli.vercel.app/docs)
+
 [![PyPI version](https://badge.fury.io/py/devagent-cli.svg)](https://badge.fury.io/py/devagent-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Ollama](https://img.shields.io/badge/Ollama-Local%20LLM-black.svg?logo=ollama)](https://ollama.ai)
-[![Safety: Sandboxed](https://img.shields.io/badge/Safety-Sandboxed-success.svg)](docs/benchmarks.md)
+[![Safety: Sandboxed](https://img.shields.io/badge/Safety-Sandboxed-success.svg)](https://devagent-cli.vercel.app/benchmarks)
 
 **DevAgent** is a research-grade, local-first coding agent runtime designed to bridge the gap between LLM-generated logic and production-ready execution integrity.
 

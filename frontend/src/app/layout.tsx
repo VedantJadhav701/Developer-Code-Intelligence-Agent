@@ -10,6 +10,7 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "DevAgent — Execution-Grounded Orchestration",
   description: "Local autonomous coding agent runtime for high-integrity development.",
+  metadataBase: new URL("https://devagent-cli.vercel.app/"),
 };
 
 export default function RootLayout({
