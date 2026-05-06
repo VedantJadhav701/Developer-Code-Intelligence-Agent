@@ -13,7 +13,14 @@ export const Nav = () => (
   >
     <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
       <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
-        <Image src="/logo.png" alt="DevAgent" width={220} height={70} className="object-contain" priority />
+        <Image 
+          src="/logo.png" 
+          alt="DevAgent" 
+          width={280} 
+          height={70} 
+          className="h-auto w-auto object-contain" 
+          priority 
+        />
       </Link>
       <div className="hidden md:flex items-center gap-8">
         <Link href="/docs" className="text-sm font-semibold text-white/60 hover:text-white transition-colors">Docs</Link>
