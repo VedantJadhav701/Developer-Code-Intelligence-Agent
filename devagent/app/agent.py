@@ -280,6 +280,12 @@ class Agent:
         observation = self._execute_action(action_name, action_arg)
         self.state.last_observation = observation
         self.state.observations.append(observation[:2000])
+        
+        self.state.explanations.append({
+            "type": "action",
+            "action": f"{action_name}: {action_arg}",
+            "reason": thought
+        })
 
         # STEP 3 — GENERATE FIX (if we have a file in context)
         code_fix = ""
@@ -555,9 +561,21 @@ class Agent:
             print(f"  [REVIEW] #{revision + 1}: {review_text[:100]}")
 
             if approved:
+                self.state.explanations.append({
+                    "type": "review",
+                    "file": self.state.current_file,
+                    "reason": review_text,
+                    "status": "APPROVED"
+                })
                 return code_fix, review_text
 
             self.metrics.patch_rejections += 1
+            self.state.explanations.append({
+                "type": "review",
+                "file": self.state.current_file,
+                "reason": review_text,
+                "status": "REJECTED"
+            })
             print(f"  [REVISE] Revising code (attempt {revision + 1})...")
             code_fix = revise_code(code_fix, review_text, self.state.task)
             code_fix = self._strip_code_fences(code_fix)

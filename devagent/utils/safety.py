@@ -13,7 +13,7 @@ console = Console()
 class SafetyManager:
     def __init__(self, project_root: str):
         self.root = os.path.abspath(project_root)
-        self.snapshot_dir = os.path.join(self.root, ".devagent", "snapshots")
+        self.snapshot_dir = os.path.join(self.root, ".devagent_backups")
         
     def create_snapshot(self, task_id: str = "latest") -> str:
         """Create a safety snapshot of the current project state."""
@@ -40,6 +40,16 @@ class SafetyManager:
                     os.makedirs(os.path.dirname(target_file), exist_ok=True)
                     shutil.copy2(src_file, target_file)
         
+        # Save metadata
+        metadata = {
+            "task_id": task_id,
+            "timestamp": timestamp,
+            "root": self.root
+        }
+        with open(os.path.join(dest, "metadata.json"), "w") as f:
+            import json
+            json.dump(metadata, f, indent=2)
+
         return dest
 
     def rollback(self, snapshot_id: str = "latest") -> bool:

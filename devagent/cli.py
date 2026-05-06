@@ -142,7 +142,21 @@ def cmd_run(args):
     if final_state.confidence_reasons:
         console.print("\n[bold]Confidence Breakdown:[/bold]")
         for reason in final_state.confidence_reasons:
-            console.print(f"  [dim]• {reason}[/dim]")
+            console.print(f"  [green]✓[/green] {reason}")
+
+    # Explain Mode
+    if config.explain and final_state.explanations:
+        console.print("\n" + "=" * 60)
+        console.print("  [bold cyan]TRACEABILITY REPORT (EXPLAIN MODE)[/bold cyan]")
+        console.print("=" * 60)
+        for exp in final_state.explanations:
+            if exp["type"] == "action":
+                console.print(f"\n[bold yellow]Selection:[/bold yellow] {exp['action']}")
+                console.print(f"  [dim]Why:[/dim] {exp['reason']}")
+            elif exp["type"] == "review":
+                status_color = "green" if exp["status"] == "APPROVED" else "red"
+                console.print(f"\n[bold {status_color}]Review:[/bold {status_color}] {exp['file']} ({exp['status']})")
+                console.print(f"  [dim]Logic:[/dim] {exp['reason']}")
 
     # Sandbox apply / Dry Run
     if sandbox and sandbox.is_active:
@@ -273,6 +287,7 @@ def main():
     run_parser.add_argument("--auto-push", action="store_true", help="Auto-push after commit")
     run_parser.add_argument("--interactive", "-i", action="store_true", help="Review changes before applying")
     run_parser.add_argument("--dry-run", action="store_true", help="Run without applying any changes")
+    run_parser.add_argument("--explain", action="store_true", help="Explain why files were chosen and patches applied")
     run_parser.add_argument("--verbose", action="store_true", help="Verbose output")
 
     # Command: benchmark

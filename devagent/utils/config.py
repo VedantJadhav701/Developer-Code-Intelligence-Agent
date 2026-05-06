@@ -54,6 +54,7 @@ class AgentConfig:
     # ── Feature flags ──
     sandbox: bool = True
     dry_run: bool = False
+    explain: bool = False
     auto_commit: bool = False
     auto_push: bool = False       # DISABLED by default — safety first
     benchmark: bool = False
@@ -100,6 +101,7 @@ class AgentConfig:
             verbose=getattr(args, "verbose", False),
             sandbox=getattr(args, "sandbox", True),
             dry_run=getattr(args, "dry_run", False),
+            explain=getattr(args, "explain", False),
             auto_commit=getattr(args, "auto_commit", False),
             auto_push=getattr(args, "auto_push", False),
             benchmark=getattr(args, "benchmark", False),

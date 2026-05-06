@@ -73,6 +73,7 @@ class AgentState:
     # -- Trust & Confidence --
     confidence_score: float = 0.0
     confidence_reasons: list[str] = field(default_factory=list)
+    explanations: list[dict[str, str]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serialisable snapshot of the current state."""
