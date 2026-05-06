@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   title: "DevAgent — Execution-Grounded Orchestration",
   description: "Local autonomous coding agent runtime for high-integrity development.",
   metadataBase: new URL("https://devagent-cli.vercel.app/"),
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
