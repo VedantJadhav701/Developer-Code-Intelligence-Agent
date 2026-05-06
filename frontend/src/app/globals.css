@@ -3,8 +3,8 @@
 :root {
   --background: #000000;
   --foreground: #ffffff;
-  --accent: #3b82f6;
-  --secondary: #10b981;
+  --accent: #f59e0b;
+  --secondary: #fbbf24;
 }
 
 @theme inline {
@@ -30,12 +30,12 @@ body {
   }
 
   .accent-gradient {
-    @apply bg-gradient-to-br from-blue-500 via-cyan-400 to-emerald-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-br from-amber-500 via-orange-400 to-rose-400 bg-clip-text text-transparent;
   }
 }
 
 ::selection {
-  @apply bg-blue-500/30 text-white;
+  @apply bg-amber-500/30 text-white;
 }
 
 ::-webkit-scrollbar {
