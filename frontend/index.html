@@ -7,168 +7,51 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
     <style>
-        :root {
-            --bg: #030303;
-            --fg: #ffffff;
-            --accent: #3b82f6;
-            --secondary: #10b981;
-            --glass: rgba(255, 255, 255, 0.04);
-            --border: rgba(255, 255, 255, 0.1);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            background-color: var(--bg);
-            color: var(--fg);
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
-
-        /* --- Elite Navbar --- */
-        nav {
-            padding: 1.5rem 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            background: rgba(3, 3, 3, 0.8);
-            backdrop-filter: blur(20px);
-            z-index: 1000;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .logo { font-weight: 800; font-size: 1.5rem; letter-spacing: -1px; display: flex; align-items: center; gap: 10px; }
-        .logo-icon { width: 24px; height: 24px; background: var(--fg); border-radius: 4px; }
-        
-        .nav-links a { margin-left: 2.5rem; color: #a1a1aa; text-decoration: none; font-size: 0.95rem; font-weight: 600; transition: color 0.3s; }
-        .nav-links a:hover { color: var(--fg); }
-
-        /* --- Hero Section --- */
         .hero { padding: 10rem 0 6rem; text-align: center; }
-        
-        .hero h1 {
-            font-size: clamp(3.5rem, 10vw, 6rem);
-            font-weight: 800;
-            line-height: 0.95;
-            letter-spacing: -3px;
-            margin-bottom: 2rem;
-        }
+        .hero h1 { font-size: clamp(3.5rem, 10vw, 6rem); font-weight: 800; line-height: 0.95; letter-spacing: -3px; margin-bottom: 2rem; }
+        .hero p { font-size: 1.35rem; color: var(--muted); max-width: 700px; margin: 0 auto 3.5rem; }
 
-        .hero p {
-            font-size: 1.35rem;
-            color: #a1a1aa;
-            max-width: 700px;
-            margin: 0 auto 3.5rem;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 1rem 2.5rem;
-            border-radius: 12px;
-            font-weight: 700;
-            text-decoration: none;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .btn-white { background: var(--fg); color: var(--bg); }
-        .btn-white:hover { transform: scale(1.05); box-shadow: 0 10px 40px rgba(255,255,255,0.2); }
-
-        /* --- Video Section --- */
-        .video-container {
-            margin-top: 6rem;
-            position: relative;
-            border-radius: 24px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-            background: #111;
-            box-shadow: 0 50px 100px rgba(0,0,0,0.8);
-        }
-
+        .video-container { margin-top: 6rem; position: relative; border-radius: 24px; overflow: hidden; border: 1px solid var(--border); background: #111; box-shadow: 0 50px 100px rgba(0,0,0,0.8); }
         video { width: 100%; display: block; }
 
-        /* --- Features --- */
-        section { padding: 10rem 0; }
-        .section-tag { color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; margin-bottom: 1rem; display: block; }
-        .section-title { font-size: 3rem; font-weight: 800; margin-bottom: 4rem; letter-spacing: -1px; }
-
-        .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
-        .feature-card {
-            background: var(--glass);
-            border: 1px solid var(--border);
-            padding: 3rem;
-            border-radius: 24px;
-            transition: all 0.4s;
-        }
+        .feature-card { background: var(--glass); border: 1px solid var(--border); padding: 3rem; border-radius: 24px; transition: all 0.4s; }
         .feature-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-10px); }
-        .feature-card h3 { font-size: 1.5rem; margin-bottom: 1rem; }
-        .feature-card p { color: #a1a1aa; font-size: 1rem; }
 
-        /* --- Comparison --- */
-        .comparison { background: #080808; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
-        th, td { padding: 2rem; text-align: left; border-bottom: 1px solid var(--border); }
-        th { font-size: 0.8rem; text-transform: uppercase; color: #71717a; letter-spacing: 1px; }
-        .check { color: var(--secondary); font-weight: 800; }
-        .cross { color: #ef4444; opacity: 0.3; }
+        /* FAQ */
+        .faq-item { background: var(--glass); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 1rem; overflow: hidden; }
+        .faq-question { padding: 1.5rem; cursor: pointer; font-weight: 700; display: flex; justify-content: space-between; }
+        .faq-answer { padding: 0 1.5rem 1.5rem; color: var(--muted); display: none; }
 
-        /* --- Footer --- */
-        footer { padding: 8rem 0 4rem; text-align: center; }
-        .footer-links { margin-bottom: 4rem; display: flex; justify-content: center; gap: 3rem; }
-        .footer-links a { color: #71717a; text-decoration: none; font-weight: 600; transition: color 0.3s; }
-        .footer-links a:hover { color: var(--fg); }
-
-        /* --- Background Animation --- */
-        .bg-glow {
-            position: absolute;
-            top: 20%; left: 50%;
-            width: 800px; height: 800px;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-            transform: translate(-50%, -50%);
-            z-index: -1;
-            filter: blur(100px);
-        }
-
-        @media (max-width: 900px) {
-            .feature-grid { grid-template-columns: 1fr; }
-            .hero h1 { font-size: 3.5rem; }
-        }
+        /* Newsletter */
+        .newsletter { background: var(--glass); border: 1px solid var(--border); padding: 4rem; border-radius: 24px; text-align: center; margin-top: 4rem; }
+        .newsletter input { background: #000; border: 1px solid var(--border); padding: 1rem 1.5rem; border-radius: 10px; color: #fff; width: 300px; margin-right: 1rem; }
     </style>
 </head>
 <body>
-    <div class="bg-glow"></div>
-    
     <nav>
         <div class="container" style="display: flex; justify-content: space-between; width: 100%;">
-            <div class="logo">
-                <div class="logo-icon"></div>
-                DevAgent
-            </div>
+            <a href="index.html" class="logo"><div class="logo-icon"></div>DevAgent</a>
             <div class="nav-links">
-                <a href="#features">Features</a>
-                <a href="#demo">Demo</a>
-                <a href="https://github.com/VedantJadhav701/Developer-Code-Intelligence-Agent">GitHub</a>
-                <a href="https://pypi.org/project/devagent-cli/" class="btn-white" style="padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.9rem;">Get Started</a>
+                <a href="docs.html">Docs</a>
+                <a href="benchmarks.html">Benchmarks</a>
+                <a href="download.html">Download</a>
+                <a href="https://github.com/VedantJadhav701/Developer-Code-Intelligence-Agent" class="btn btn-white" style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">Star on GitHub</a>
             </div>
         </div>
     </nav>
 
     <header class="hero">
         <div class="container">
-            <span class="section-tag">v3.4.2 — Operational Integrity</span>
+            <span class="section-tag">v3.4.3 — Execution Grounded</span>
             <h1>High-Integrity Local Orchestration</h1>
-            <p>DevAgent autonomously detects, repairs, and validates code fixes in isolated runtimes. No cloud. No drift. 100% execution-grounded.</p>
-            <a href="https://pypi.org/project/devagent-cli/" class="btn btn-white">pip install devagent-cli</a>
+            <p>DevAgent autonomously detects, repairs, and validates code fixes in isolated runtimes. No cloud. 100% execution-grounded.</p>
+            <a href="download.html" class="btn btn-white">pip install devagent-cli</a>
 
-            <div class="video-container" id="demo">
+            <div class="video-container">
                 <video autoplay muted loop playsinline>
                     <source src="assets/video.mp4" type="video/mp4">
-                    Your browser does not support the video tag.
                 </video>
             </div>
         </div>
@@ -176,9 +59,9 @@
 
     <section id="features">
         <div class="container">
-            <span class="section-tag">Capabilities</span>
+            <span class="section-tag">Core Tech</span>
             <h2 class="section-title">Engineered for Reliability</h2>
-            <div class="feature-grid">
+            <div class="grid-3">
                 <div class="feature-card">
                     <h3>Isolated Runtimes</h3>
                     <p>Every execution is contained within a provisioned venv, preventing side effects and host pollution.</p>
@@ -195,46 +78,34 @@
         </div>
     </section>
 
-    <section class="comparison">
+    <section id="faq">
+        <div class="container" style="max-width: 800px;">
+            <h2 class="section-title" style="text-align: center;">FAQ</h2>
+            <div class="faq-item">
+                <div class="faq-question">Is DevAgent really 100% local? <span>+</span></div>
+                <div class="faq-answer">Yes. DevAgent uses Ollama to run models on your machine. No code ever leaves your project root.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">What models do you recommend? <span>+</span></div>
+                <div class="faq-answer">We recommend <b>qwen2.5-coder:3b</b> for its perfect balance of speed and patching accuracy on standard hardware.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">Does it support JavaScript? <span>+</span></div>
+                <div class="faq-answer">Currently, the Environment Runtime is optimized for Python. Multi-language support is on the roadmap for v4.0.</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="cta">
         <div class="container">
-            <span class="section-tag">The Benchmark</span>
-            <h2 class="section-title">The Orchestration Gap</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Infrastructure Detail</th>
-                        <th>Traditional Agents</th>
-                        <th>OpenCode.ai</th>
-                        <th>DevAgent</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Venv Isolation (.tmp_envs)</td>
-                        <td class="cross">❌</td>
-                        <td class="cross">❌</td>
-                        <td class="check">✅ Verified</td>
-                    </tr>
-                    <tr>
-                        <td>Autonomous Dependency Repair</td>
-                        <td class="cross">❌</td>
-                        <td class="cross">❌</td>
-                        <td class="check">✅ Verified</td>
-                    </tr>
-                    <tr>
-                        <td>Surgical Patching (Diff Engine)</td>
-                        <td class="cross">❌</td>
-                        <td class="check">✅</td>
-                        <td class="check">✅ Verified</td>
-                    </tr>
-                    <tr>
-                        <td>Local-First Privacy (Ollama)</td>
-                        <td class="cross">❌</td>
-                        <td class="check">✅</td>
-                        <td class="check">✅ Verified</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="newsletter">
+                <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">Stay in the loop</h2>
+                <p style="color: var(--muted); margin-bottom: 2rem;">Get notified about new releases and benchmark reports.</p>
+                <form onsubmit="return false;">
+                    <input type="email" placeholder="you@example.com">
+                    <button class="btn btn-white">Join Newsletter</button>
+                </form>
+            </div>
         </div>
     </section>
 
@@ -243,11 +114,23 @@
             <div class="footer-links">
                 <a href="https://github.com/VedantJadhav701/Developer-Code-Intelligence-Agent">GitHub</a>
                 <a href="https://pypi.org/project/devagent-cli/">PyPI</a>
-                <a href="../docs/benchmarks.md">Benchmarks</a>
-                <a href="../docs/troubleshooting.md">Troubleshooting</a>
+                <a href="docs.html">Documentation</a>
+                <a href="benchmarks.html">Benchmarks</a>
+                <a href="changelog.html">Changelog</a>
             </div>
             <p style="color: #3f3f46; font-size: 0.9rem; font-weight: 600;">DevAgent — Local Autonomous Coding Agent Runtime.</p>
         </div>
     </footer>
+
+    <script>
+        document.querySelectorAll('.faq-question').forEach(q => {
+            q.addEventListener('click', () => {
+                const answer = q.nextElementSibling;
+                const isVisible = answer.style.display === 'block';
+                answer.style.display = isVisible ? 'none' : 'block';
+                q.querySelector('span').innerText = isVisible ? '+' : '−';
+            });
+        });
+    </script>
 </body>
 </html>

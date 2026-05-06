@@ -1,0 +1,71 @@
+:root {
+    --bg: #030303;
+    --fg: #ffffff;
+    --accent: #3b82f6;
+    --secondary: #10b981;
+    --glass: rgba(255, 255, 255, 0.04);
+    --glass-hover: rgba(255, 255, 255, 0.08);
+    --border: rgba(255, 255, 255, 0.1);
+    --muted: #a1a1aa;
+    --card-bg: #0d0d0d;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+.container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+
+/* --- Navbar --- */
+nav {
+    padding: 1.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    background: rgba(3, 3, 3, 0.8);
+    backdrop-filter: blur(20px);
+    z-index: 1000;
+    border-bottom: 1px solid var(--border);
+}
+
+.logo { font-weight: 800; font-size: 1.5rem; letter-spacing: -1px; display: flex; align-items: center; gap: 10px; color: var(--fg); text-decoration: none; }
+.logo-icon { width: 24px; height: 24px; background: var(--fg); border-radius: 4px; }
+
+.nav-links a { margin-left: 2.5rem; color: var(--muted); text-decoration: none; font-size: 0.95rem; font-weight: 600; transition: color 0.3s; }
+.nav-links a:hover { color: var(--fg); }
+
+.btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-white { background: var(--fg); color: var(--bg); }
+.btn-white:hover { transform: scale(1.05); }
+
+/* --- Global Sections --- */
+section { padding: 8rem 0; }
+.section-tag { color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 1rem; display: block; }
+.section-title { font-size: 3rem; font-weight: 800; margin-bottom: 3rem; letter-spacing: -1.5px; }
+
+/* --- Footer --- */
+footer { padding: 8rem 0 4rem; border-top: 1px solid var(--border); text-align: center; }
+.footer-links { margin-bottom: 4rem; display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap; }
+.footer-links a { color: var(--muted); text-decoration: none; font-weight: 600; transition: color 0.3s; }
+.footer-links a:hover { color: var(--fg); }
+
+/* --- Utility --- */
+.mono { font-family: 'JetBrains Mono', monospace; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+@media (max-width: 900px) { .grid-3 { grid-template-columns: 1fr; } }

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation — DevAgent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .docs-wrapper { display: grid; grid-template-columns: 250px 1fr 200px; gap: 3rem; padding-top: 4rem; min-height: 80vh; }
+        
+        .sidebar { position: sticky; top: 100px; height: fit-content; }
+        .sidebar h4 { font-size: 0.8rem; text-transform: uppercase; color: var(--muted); letter-spacing: 1px; margin-bottom: 1.5rem; }
+        .sidebar-link { display: block; padding: 0.5rem 0; color: var(--muted); text-decoration: none; font-size: 0.95rem; transition: color 0.2s; }
+        .sidebar-link:hover, .sidebar-link.active { color: var(--fg); font-weight: 600; }
+
+        .content h1 { font-size: 3rem; font-weight: 800; margin-bottom: 1rem; }
+        .content p { font-size: 1.1rem; color: var(--muted); margin-bottom: 2rem; }
+        .content h2 { margin: 3rem 0 1rem; font-size: 1.75rem; }
+        
+        .code-block { background: #111; border: 1px solid var(--border); padding: 1.5rem; border-radius: 12px; margin: 1.5rem 0; position: relative; }
+        .code-block pre { overflow-x: auto; color: var(--secondary); font-size: 0.9rem; }
+
+        .toc h4 { font-size: 0.75rem; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+        .toc-link { display: block; padding: 0.25rem 0; color: #71717a; text-decoration: none; font-size: 0.85rem; }
+
+        @media (max-width: 1000px) {
+            .docs-wrapper { grid-template-columns: 1fr; }
+            .sidebar, .toc { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="container" style="display: flex; justify-content: space-between; width: 100%;">
+            <a href="index.html" class="logo"><div class="logo-icon"></div>DevAgent</a>
+            <div class="nav-links">
+                <a href="docs.html" class="active">Docs</a>
+                <a href="benchmarks.html">Benchmarks</a>
+                <a href="download.html">Download</a>
+                <a href="https://github.com/VedantJadhav701/Developer-Code-Intelligence-Agent" class="btn btn-white" style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">Star</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="docs-wrapper">
+            <aside class="sidebar">
+                <h4>Getting Started</h4>
+                <a href="#" class="sidebar-link active">Introduction</a>
+                <a href="#" class="sidebar-link">Installation</a>
+                <a href="#" class="sidebar-link">Quickstart</a>
+                
+                <h4 style="margin-top: 3rem;">Core Concepts</h4>
+                <a href="#" class="sidebar-link">The ReAct Loop</a>
+                <a href="#" class="sidebar-link">Environment Runtime</a>
+                <a href="#" class="sidebar-link">Surgical Patching</a>
+                
+                <h4 style="margin-top: 3rem;">Advanced</h4>
+                <a href="#" class="sidebar-link">Benchmarks</a>
+                <a href="#" class="sidebar-link">Sandbox Mode</a>
+                <a href="#" class="sidebar-link">Rollbacks</a>
+            </aside>
+
+            <main class="content">
+                <h1>Introduction</h1>
+                <p>DevAgent is an execution-grounded autonomous coding agent designed for local repository orchestration.</p>
+                
+                <p>Unlike traditional AI coding assistants that simply generate text, DevAgent operates with a <b>full awareness of your runtime environment</b>. It doesn't just suggest code; it executes, validates, and repairs the environment to ensure your patches actually work.</p>
+
+                <h2>Why DevAgent?</h2>
+                <p>Most coding agents fail because they lack grounding. They might propose a fix that uses a library you don't have installed, or code that uses the wrong Python version. DevAgent solves this by:</p>
+                <ul>
+                    <li>Detecting project requirements automatically.</li>
+                    <li>Provisioning isolated virtual environments.</li>
+                    <li>Autonomously repairing broken runtimes.</li>
+                    <li>Validating every change against your actual test suite.</li>
+                </ul>
+
+                <h2>System Prerequisites</h2>
+                <p>To run DevAgent locally with high performance, we recommend the following stack:</p>
+                <ul>
+                    <li><b>Ollama</b>: Running the <code>qwen2.5-coder:3b</code> model.</li>
+                    <li><b>Python 3.11+</b>: Required for core agent logic.</li>
+                    <li><b>Git</b>: For surgical patching and safety rollbacks.</li>
+                </ul>
+
+                <div class="code-block">
+                    <pre class="mono"># Pull our recommended model
+ollama pull qwen2.5-coder:3b</pre>
+                </div>
+
+                <h2>Quick Install</h2>
+                <p>DevAgent is available as a single package on PyPI.</p>
+                <div class="code-block">
+                    <pre class="mono">pip install devagent-cli</pre>
+                </div>
+            </main>
+
+            <aside class="toc">
+                <h4>On this page</h4>
+                <a href="#" class="toc-link">Introduction</a>
+                <a href="#" class="toc-link">Why DevAgent?</a>
+                <a href="#" class="toc-link">System Prerequisites</a>
+                <a href="#" class="toc-link">Quick Install</a>
+            </aside>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p style="color: #3f3f46; font-size: 0.9rem; font-weight: 600;">DevAgent Documentation — Built for high-integrity development.</p>
+        </div>
+    </footer>
+</body>
+</html>

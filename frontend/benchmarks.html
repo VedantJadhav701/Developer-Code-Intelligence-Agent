@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benchmarks — DevAgent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .benchmark-hero { padding: 6rem 0; text-align: center; }
+        .benchmark-hero h1 { font-size: 4rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -2px; }
+        .benchmark-hero p { color: var(--muted); font-size: 1.25rem; max-width: 700px; margin: 0 auto; }
+
+        .metric-card { background: var(--glass); border: 1px solid var(--border); padding: 3rem; border-radius: 24px; text-align: center; }
+        .metric-value { font-size: 4rem; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 0.5rem; }
+        .metric-label { font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem; }
+
+        .chart-section { margin-top: 6rem; }
+        .chart-row { display: flex; align-items: center; gap: 2rem; margin-bottom: 2rem; }
+        .chart-label { width: 200px; font-weight: 600; }
+        .chart-bar-wrap { flex: 1; height: 12px; background: #111; border-radius: 6px; overflow: hidden; }
+        .chart-bar { height: 100%; background: var(--accent-gradient, var(--accent)); transition: width 1s ease; }
+        .chart-value { width: 60px; font-weight: 700; text-align: right; }
+
+        .tier-card { background: var(--card-bg); border: 1px solid var(--border); padding: 2.5rem; border-radius: 20px; }
+        .tier-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .tier-tag { padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.75rem; font-weight: 800; background: rgba(59, 130, 246, 0.1); color: var(--accent); }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="container" style="display: flex; justify-content: space-between; width: 100%;">
+            <a href="index.html" class="logo"><div class="logo-icon"></div>DevAgent</a>
+            <div class="nav-links">
+                <a href="docs.html">Docs</a>
+                <a href="benchmarks.html" class="active">Benchmarks</a>
+                <a href="download.html">Download</a>
+                <a href="https://github.com/VedantJadhav701/Developer-Code-Intelligence-Agent" class="btn btn-white" style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">Star</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="benchmark-hero">
+        <div class="container">
+            <span class="section-tag">Empirical Validation v3.4.1</span>
+            <h1>Integrity Over Hype.</h1>
+            <p>We don't hide our failures. DevAgent is continuously benchmarked against real-world repos to ensure orchestration reliability.</p>
+        </div>
+    </header>
+
+    <section>
+        <div class="container">
+            <div class="grid-3">
+                <div class="metric-card">
+                    <div class="metric-value">95%</div>
+                    <div class="metric-label">Dependency Repair</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">80%</div>
+                    <div class="metric-label">Unit Bugfixes</div>
+                </div>
+                <div class="metric-card" style="border-color: var(--secondary);">
+                    <div class="metric-value" style="color: var(--secondary);">100%</div>
+                    <div class="metric-label">Isolation Safety</div>
+                </div>
+            </div>
+
+            <div class="chart-section">
+                <h2 class="section-title">Success Rate by Category</h2>
+                <div class="chart-row">
+                    <div class="chart-label">Import Errors</div>
+                    <div class="chart-bar-wrap"><div class="chart-bar" style="width: 95%; background: var(--secondary);"></div></div>
+                    <div class="chart-value">95%</div>
+                </div>
+                <div class="chart-row">
+                    <div class="chart-label">Syntax Errors</div>
+                    <div class="chart-bar-wrap"><div class="chart-bar" style="width: 85%;"></div></div>
+                    <div class="chart-value">85%</div>
+                </div>
+                <div class="chart-row">
+                    <div class="chart-label">Logic Validation</div>
+                    <div class="chart-bar-wrap"><div class="chart-bar" style="width: 70%;"></div></div>
+                    <div class="chart-value">70%</div>
+                </div>
+                <div class="chart-row">
+                    <div class="chart-label">Cross-File Refactor</div>
+                    <div class="chart-bar-wrap"><div class="chart-bar" style="width: 20%; opacity: 0.5;"></div></div>
+                    <div class="chart-value">20%</div>
+                </div>
+            </div>
+
+            <div class="grid-3" style="margin-top: 6rem;">
+                <div class="tier-card">
+                    <div class="tier-header">
+                        <h3>Maturity Tier 1</h3>
+                        <span class="tier-tag">EXCELLENT</span>
+                    </div>
+                    <p style="color: var(--muted); font-size: 0.9rem;">Single-file fixes and autonomous dependency resolution are now considered production-ready.</p>
+                </div>
+                <div class="tier-card">
+                    <div class="tier-header">
+                        <h3>Maturity Tier 2</h3>
+                        <span class="tier-tag">STABLE</span>
+                    </div>
+                    <p style="color: var(--muted); font-size: 0.9rem;">Hierarchical retrieval handles files up to 20KB with consistent patching accuracy.</p>
+                </div>
+                <div class="tier-card">
+                    <div class="tier-header">
+                        <h3>Maturity Tier 3</h3>
+                        <span class="tier-tag">EXPERIMENTAL</span>
+                    </div>
+                    <p style="color: var(--muted); font-size: 0.9rem;">Multi-file architectural refactoring is bounded by local model context limitations.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p style="color: #3f3f46; font-size: 0.9rem; font-weight: 600;">Full Audit Trail available in <code class="mono">docs/benchmarks.md</code>.</p>
+        </div>
+    </footer>
+</body>
+</html>
