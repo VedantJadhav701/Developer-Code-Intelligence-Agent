@@ -33,8 +33,43 @@ BANNER = r"""
                        |___/
 """
 
+from rich.progress import Progress, SpinnerColumn, TextColumn
+
+def verify_ollama(model_name: str) -> bool:
+    """Verify Ollama is running and model is available."""
+    import subprocess
+    import requests
+    
+    # 1. Check if server is reachable
+    try:
+        response = requests.get("http://localhost:11434/api/tags", timeout=2)
+        if response.status_code != 200:
+            console.print("[bold red][ERROR][/bold red] Ollama server returned error.")
+            return False
+    except:
+        console.print("[bold red][ERROR][/bold red] Could not connect to Ollama server.")
+        console.print("Run: [bold cyan]ollama serve[/bold cyan] in a separate terminal.")
+        return False
+
+    # 2. Check if model is pulled
+    try:
+        tags = response.json().get("models", [])
+        model_names = [m["name"] for m in tags]
+        # Handle both "name" and "name:latest"
+        if model_name not in model_names and f"{model_name}:latest" not in model_names:
+            console.print(f"[bold red][ERROR][/bold red] Model [bold cyan]{model_name}[/bold cyan] not found.")
+            console.print(f"Run: [bold cyan]ollama pull {model_name}[/bold cyan]")
+            return False
+    except Exception as e:
+        console.print(f"[bold yellow][WARN][/bold yellow] Could not verify model: {e}")
+    
+    return True
+
 def cmd_run(args):
     """Implementation of 'devagent run' command."""
+    if not verify_ollama(args.model):
+        return 1
+
     config = AgentConfig.from_cli(args)
     root = os.path.abspath(config.project_root)
     

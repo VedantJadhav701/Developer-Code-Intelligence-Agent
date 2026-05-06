@@ -1,35 +1,11 @@
-# Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
+*.pyc
+.venv/
+logs/
 dist/
 build/
-*.egg
-
-# Virtual environments
-.venv/
-venv/
-env/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Testing
+*.egg-info/
 .pytest_cache/
-.coverage
-htmlcov/
-.mypy_cache/
-.tox/
-
-# DevAgent runtime
-logs/
 sandbox_workspace/
-benchmarks/_tmp_*/
-
-# OS
-.DS_Store
-Thumbs.db
+.tmp*
+faiss_index/

@@ -20,8 +20,6 @@ from pathlib import Path
 from typing import Any
 
 from devagent.utils.config import (
-    CHUNK_SIZE,
-    CHUNK_OVERLAP,
     SUPPORTED_EXTENSIONS,
     IGNORE_DIRS,
     MAX_FILE_SIZE_BYTES,

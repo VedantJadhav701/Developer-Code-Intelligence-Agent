@@ -66,8 +66,23 @@ class AgentConfig:
     log_dir: str = ""
     sandbox_dir: str = ""
 
+    def _load_global_config(self) -> None:
+        """Load overrides from ~/.devagent/config.json"""
+        import json
+        config_path = os.path.expanduser("~/.devagent/config.json")
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, "r") as f:
+                    data = json.load(f)
+                    for k, v in data.items():
+                        if hasattr(self, k):
+                            setattr(self, k, v)
+            except Exception:
+                pass
+
     def __post_init__(self) -> None:
         self.project_root = os.path.abspath(self.project_root)
+        self._load_global_config()
         if not self.log_dir:
             self.log_dir = os.path.join(self.project_root, "logs")
         if not self.sandbox_dir:
