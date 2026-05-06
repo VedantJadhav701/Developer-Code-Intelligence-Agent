@@ -5,6 +5,7 @@ Safety Manager — handles snapshots and rollbacks.
 import os
 import shutil
 import time
+import subprocess
 from rich.console import Console
 from devagent.tools.git_tools import is_git_repo
 
@@ -55,8 +56,14 @@ class SafetyManager:
     def rollback(self, snapshot_id: str = "latest") -> bool:
         """Rollback the project to a previous snapshot."""
         if is_git_repo(self.root):
-            console.print("[bold yellow][SAFETY][/bold yellow] This is a Git repository. Use [bold cyan]git checkout .[/bold cyan] to rollback.")
-            return False
+            console.print("[bold yellow][SAFETY][/bold yellow] This is a Git repository. Reverting all local changes...")
+            try:
+                subprocess.run(["git", "checkout", "."], cwd=self.root, check=True, capture_output=True)
+                console.print("[bold green]Git rollback complete.[/bold green]")
+                return True
+            except Exception as e:
+                console.print(f"[bold red][ERROR][/bold red] Git rollback failed: {e}")
+                return False
 
         # Find latest snapshot if not specified
         if not os.path.exists(self.snapshot_dir):
