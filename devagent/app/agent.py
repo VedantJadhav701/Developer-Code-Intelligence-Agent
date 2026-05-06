@@ -30,6 +30,7 @@ from devagent.app.patcher import generate_diff, apply_patch, format_diff_summary
 from devagent.app.memory import WorkingMemory, chunk_project, SemanticIndex
 from devagent.tools.search import search_code
 from devagent.tools.file_ops import read_file, write_file, list_files
+from devagent.tools.file_map import get_file_map
 from devagent.tools.test_runner import run_tests
 from devagent.tools.linter import lint_code
 from devagent.tools.git_tools import git_diff, git_status
@@ -47,7 +48,6 @@ You are a coding agent. Your task:
 
 Project root: {project_root}
 Current step: {step}/{max_steps}
-Previous attempts: {attempts}
 
 {plan_context}
 
@@ -59,9 +59,10 @@ Previous attempts: {attempts}
 
 Decide the SINGLE next action. Choose ONE:
 - list_files: <relative_path>
+- get_file_map: <relative_path>
 - search_code: <keyword>
 - semantic_search: <query>
-- read_file: <relative_path>
+- read_file: <relative_path>[:L<start>-<end>]
 - write_file: <relative_path>
 - surgical_patch: <file> | <SEARCH> | <REPLACE>
 - run_tests: <optional_path>
@@ -69,12 +70,11 @@ Decide the SINGLE next action. Choose ONE:
 - git_diff
 
 STRATEGY:
-1. START by using 'run_tests' to identify the exact failure location.
-2. USE 'read_file' on the failing file before attempting a fix.
-3. PREFER 'surgical_patch' for logic fixes. Format: file.py | <SEARCH> | <REPLACE>
-4. USE 'write_file' ONLY for creating brand new files.
-5. ALWAYS use full relative paths (e.g. benchmarks/math/calc.py).
-6. If tests pass but system errors remain, verify the file path is correct.
+1. START by using 'run_tests' to identify the failure.
+2. For large files (>50 lines), use 'get_file_map' FIRST to see the structure.
+3. USE 'read_file' with line ranges (e.g. file.py:L10-L50) for targeted reading.
+4. USE 'surgical_patch' for logic fixes. Format: file.py | <SEARCH> | <REPLACE>
+5. ALWAYS use full relative paths.
 
 Reply in this EXACT format (two lines only):
 THOUGHT: <your reasoning>
@@ -92,21 +92,11 @@ CURRENT CODE:
 
 {retrieval_context}
 
-TASK: {task}
-FILE: {file_path}
-
-{error_context}
-
-{retrieval_context}
-
-CURRENT CODE:
-{file_content}
-
 Fix the bug. Output ONLY the COMPLETE Python code.
 """
 
 EXTRACT_ACTION_PATTERN = re.compile(
-    r"ACTION:\s*(search_code|semantic_search|read_file|write_file|surgical_patch|run_tests|lint_code|list_files|git_diff)\s*:?\s*(.*)",
+    r"ACTION:\s*(get_file_map|search_code|semantic_search|read_file|write_file|surgical_patch|run_tests|lint_code|list_files|git_diff)\s*:?\s*(.*)",
     re.IGNORECASE,
 )
 
@@ -296,8 +286,12 @@ class Agent:
             code_fix = self._generate_fix()
             self.state.last_code_fix = code_fix
 
-            # STEP 4 — SELF-REVIEW
+            # STEP 4 — SELF-REVIEW (with Synthetic Grounding)
             if code_fix:
+                # Add a "Dry Run" lint check to the review context
+                _, lint_output = lint_code(self.state.current_file)
+                self.state.last_observation += f"\n[LINT] {lint_output}"
+
                 code_fix, review_text = self._self_review(code_fix)
                 self.state.last_review = review_text
 
@@ -465,6 +459,9 @@ class Agent:
             result = search_code(action_arg, root)
             self._extract_file_from_search(result)
             return result
+
+        elif action_name == "get_file_map":
+            return get_file_map(action_arg, root)
 
         elif action_name == "semantic_search":
             result = semantic_search(action_arg, root)

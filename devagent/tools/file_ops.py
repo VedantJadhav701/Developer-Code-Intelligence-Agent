@@ -10,16 +10,36 @@ from pathlib import Path
 
 def read_file(path: str) -> str:
     """Read a file and return its contents.
-
+    
+    Supports range: path/to/file.py:L10-L50
     Returns an error string on failure (never raises).
     """
     try:
+        # Check for line range
+        line_range = None
+        if ":L" in path:
+            parts = path.split(":L")
+            path = parts[0]
+            line_range = parts[1]
+
         p = Path(path)
         if not p.exists():
             return f"[ERROR] File not found: {path}"
         if not p.is_file():
             return f"[ERROR] Not a file: {path}"
-        content = p.read_text(encoding="utf-8", errors="replace")
+        
+        lines = p.read_text(encoding="utf-8", errors="replace").splitlines()
+        
+        if line_range:
+            try:
+                start, end = map(int, line_range.split("-"))
+                lines = lines[start-1:end]
+                header = f"### {path} (Lines {start}-{end}) ###\n"
+                return header + "\n".join(lines)
+            except ValueError:
+                return f"[ERROR] Invalid line range: {line_range}"
+
+        content = "\n".join(lines)
         return content[:10000]  # cap to protect LLM context
     except Exception as exc:  # noqa: BLE001
         return f"[ERROR] Could not read {path}: {exc}"

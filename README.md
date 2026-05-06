@@ -23,26 +23,23 @@
 
 </div>
 
-## 🤔 Why DevAgent?
+## 🛡️ Why DevAgent?
 
-Most AI coding tools are **chatbots** — they suggest code, you copy-paste, you pray.
+DevAgent is built on a "Safety-First" architecture for **high-integrity developer infrastructure**. Unlike chatbots that guess code, DevAgent is a local autonomous agent that operates within a strictly observed environment.
 
-DevAgent is a **real agent** with a retrieval-first, tool-grounded architecture:
+### 📊 Empirical Validation
+We don't hide our limitations. DevAgent v3.2.3 has been stress-tested against real-world, "messy" repositories, providing a transparent **[Benchmark Report](docs/benchmarks.md)**. 
 
-| | Chatbot | DevAgent |
+| | Other Agents | DevAgent |
 |---|---|---|
-| Searches your codebase | ❌ | ✅ ripgrep + semantic search |
-| Retrieves relevant code | ❌ | ✅ FAISS embeddings |
-| Plans before coding | ❌ | ✅ Planner layer |
-| Generates patches | ❌ | ✅ Unified diffs |
-| Reviews its own output | ❌ | ✅ Self-critique loop |
-| Runs your tests | ❌ | ✅ pytest integration |
-| Retries on failure | ❌ | ✅ Up to N iterations |
-| Works in sandbox | ❌ | ✅ Isolated workspace |
-| Works offline | ❌ | ✅ 100% local via Ollama |
-| Costs money | 💸 | ✅ Free forever |
+| **Safety Isolation** | ❌ | ✅ Strict Sandbox Mode |
+| **Recovery** | ❌ | ✅ Git-native + Snapshot Rollback |
+| **Validation** | ❌ | ✅ Empirical Stress Tests |
+| **Transparency** | ❌ | ✅ Visible Failure Taxonomy |
+| **Privacy** | ❌ | ✅ 100% Local (Ollama) |
+| **Costs** | 💸 | ✅ Zero API Costs |
 
-> **Philosophy:** Execution > Reasoning. Tools > Hallucination. Retrieval > Huge Context. Reliability > Intelligence.
+> **Philosophy:** Safety > Intelligence. Observability > Reasoning. Retrieval > Huge Context. Reliability > Hype.
 
 ---
 
@@ -115,13 +112,13 @@ devagent run --task "Fix the divide-by-zero bug" --root ./demo_project
 | `devagent models` | List available Ollama models |
 | `devagent version` | Show current version |
 
-### 🛡️ Reliability & Safety (v3.2.1+)
-DevAgent is built for **Enterprise-grade safety**:
-- **Dry Run Mode**: Use `--dry-run` to see what the agent *would* do without touching your files.
-- **Auto-Snapshot**: Creates a safety restore point before every run.
-- **Rollback**: Revert the last agent changes instantly with `devagent rollback`.
-- **Forensic Test Detection**: Detects successful test runs even in noisy environments.
-- **Path Anchoring**: Automatically corrects "root hallucinations" for subdirectories.
+#### 🛡️ Reliability & Safety
+DevAgent is built for **production-grade reliability**:
+- **Isolated Sandbox**: Agent works in `sandbox_workspace/`, keeping your source clean until success.
+- **Auto-Snapshot**: Creates a safety restore point before every execution.
+- **Instant Rollback**: Revert agent changes with `devagent rollback`.
+- **Traceability**: Every thought and tool call is logged to `logs/run.json`.
+- **Environment Awareness**: Detects and uses your project's Python environment automatically.
 
 #### 🕹️ Interactive Mode
 Run with `--interactive` (or `-i`) to review colorized diffs before they are applied to your project.
