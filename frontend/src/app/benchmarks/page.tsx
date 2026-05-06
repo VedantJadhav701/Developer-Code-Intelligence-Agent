@@ -30,7 +30,7 @@ export default function Benchmarks() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <span className="text-blue-400 font-bold uppercase tracking-widest text-xs mb-4 block">Empirical Validation v3.4.1</span>
+            <span className="text-amber-400 font-bold uppercase tracking-widest text-xs mb-4 block">Empirical Validation v3.4.1</span>
             <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-8">Integrity Over Hype.</h1>
             <p className="text-xl text-white/40 max-w-2xl mx-auto">We don't hide our failures. DevAgent is continuously benchmarked against real-world repositories to ensure orchestration reliability.</p>
           </motion.div>
@@ -40,20 +40,20 @@ export default function Benchmarks() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
-            <MetricCard label="Dependency Repair" value="95%" color="bg-blue-500" />
+            <MetricCard label="Dependency Repair" value="95%" color="bg-amber-500" />
             <MetricCard label="Unit Bugfixes" value="80%" color="bg-purple-500" />
             <MetricCard label="Isolation Safety" value="100%" color="bg-emerald-500" />
           </div>
 
           <div className="glass p-12 rounded-[3rem] border border-white/10">
             <h2 className="text-3xl font-bold mb-12 flex items-center gap-3">
-              <BarChart3 className="text-blue-400" /> Success Rate by Category
+              <BarChart3 className="text-amber-400" /> Success Rate by Category
             </h2>
             <div className="space-y-8">
               {[
                 { label: "Import Errors", value: "95%", w: "95%", c: "bg-emerald-500" },
-                { label: "Syntax Errors", value: "85%", w: "85%", c: "bg-blue-500" },
-                { label: "Logic Validation", value: "70%", w: "70%", c: "bg-blue-500" },
+                { label: "Syntax Errors", value: "85%", w: "85%", c: "bg-amber-500" },
+                { label: "Logic Validation", value: "70%", w: "70%", c: "bg-amber-500" },
                 { label: "Cross-File Refactor", value: "20%", w: "20%", c: "bg-white/10" }
               ].map((item, i) => (
                 <div key={i} className="space-y-2">

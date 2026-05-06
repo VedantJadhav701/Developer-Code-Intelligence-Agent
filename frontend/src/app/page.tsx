@@ -22,7 +22,7 @@ const Hero = () => (
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest mb-8">
+        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-widest mb-8">
           <Activity size={14} /> The Maturity Layer is Live
         </span>
         <h1 className="text-6xl md:text-8xl font-extrabold tracking-tighter mb-8 leading-[0.9]">
@@ -48,7 +48,7 @@ const Hero = () => (
         transition={{ delay: 0.3, duration: 0.8 }}
         className="mt-20 relative group"
       >
-        <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full group-hover:bg-blue-500/30 transition-colors" />
+        <div className="absolute inset-0 bg-amber-500/20 blur-[100px] rounded-full group-hover:bg-amber-500/30 transition-colors" />
         <div className="relative glass rounded-3xl overflow-hidden shadow-2xl shadow-black">
           <video 
             autoPlay 
@@ -73,7 +73,7 @@ const FeatureCard = ({ icon: Icon, title, desc, delay }: any) => (
     transition={{ delay }}
     className="p-8 rounded-3xl glass hover:border-white/20 transition-colors"
   >
-    <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-6">
+    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-400 mb-6">
       <Icon size={24} />
     </div>
     <h3 className="text-xl font-bold mb-4">{title}</h3>
@@ -95,7 +95,7 @@ const Comparison = () => (
               <th className="p-8 text-xs uppercase tracking-widest text-white/40">Capability</th>
               <th className="p-8 text-xs uppercase tracking-widest text-white/40">Traditional</th>
               <th className="p-8 text-xs uppercase tracking-widest text-white/40">OpenCode.ai</th>
-              <th className="p-8 text-xs uppercase tracking-widest text-blue-400">DevAgent</th>
+              <th className="p-8 text-xs uppercase tracking-widest text-amber-400">DevAgent</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
@@ -110,7 +110,7 @@ const Comparison = () => (
                 <td className="p-8 font-semibold">{row.cap}</td>
                 <td className="p-8">{row.trad ? <CheckCircle2 className="text-green-500" /> : <div className="w-6 h-6 rounded-full border border-white/10" />}</td>
                 <td className="p-8">{row.open ? <CheckCircle2 className="text-green-500" /> : <div className="w-6 h-6 rounded-full border border-white/10" />}</td>
-                <td className="p-8 bg-blue-500/5"><CheckCircle2 className="text-blue-400" /></td>
+                <td className="p-8 bg-amber-500/5"><CheckCircle2 className="text-amber-400" /></td>
               </tr>
             ))}
           </tbody>
@@ -156,7 +156,7 @@ export default function Home() {
       <section className="py-40">
         <div className="max-w-7xl mx-auto px-6">
           <div className="p-20 rounded-[3rem] glass text-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-blue-500/10 blur-[120px]" />
+            <div className="absolute inset-0 bg-amber-500/10 blur-[120px]" />
             <h2 className="text-5xl font-bold mb-8 relative">Ready to fix the execution gap?</h2>
             <div className="flex justify-center gap-4 relative">
               <Link href="/download" className="px-10 py-5 rounded-2xl bg-white text-black font-bold text-xl hover:scale-105 transition-transform">

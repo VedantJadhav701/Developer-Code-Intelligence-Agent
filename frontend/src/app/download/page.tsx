@@ -26,14 +26,14 @@ export default function DownloadPage() {
             <p className="text-xl text-white/40 mb-12">Install the DevAgent CLI via PyPI. 100% Local. Zero configuration required.</p>
             
             <div className="glass p-12 rounded-[3rem] border border-white/10 relative overflow-hidden">
-               <div className="absolute inset-0 bg-blue-500/5 blur-[80px]" />
+               <div className="absolute inset-0 bg-amber-500/5 blur-[80px]" />
                <div className="relative">
-                  <div className="flex items-center gap-3 mb-6 text-blue-400 justify-center">
+                  <div className="flex items-center gap-3 mb-6 text-amber-400 justify-center">
                     <Terminal size={24} />
                     <span className="font-bold uppercase tracking-widest text-xs">Standard Installation</span>
                   </div>
                   <div className="bg-black border border-white/10 p-8 rounded-3xl flex items-center justify-between group">
-                    <code className="text-2xl font-mono text-blue-400">{cmd}</code>
+                    <code className="text-2xl font-mono text-amber-400">{cmd}</code>
                     <button 
                       onClick={handleCopy}
                       className="p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors text-white"

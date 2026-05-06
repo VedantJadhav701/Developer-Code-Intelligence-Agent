@@ -15,14 +15,14 @@ const sections = {
         <p className="text-white/40">Unlike traditional AI assistants that simply generate text, DevAgent operates with **full execution grounding**. It manages the entire lifecycle of a fix: scanning the environment, provisioning isolated runtimes, and verifying patches against actual tests.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
           <div className="glass p-6 rounded-2xl border border-white/10 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-blue-500/5 blur-2xl group-hover:bg-blue-500/10 transition-colors" />
-            <Shield className="text-blue-400 mb-4 relative" />
+            <div className="absolute inset-0 bg-amber-500/5 blur-2xl group-hover:bg-amber-500/10 transition-colors" />
+            <Shield className="text-amber-400 mb-4 relative" />
             <h3 className="font-bold mb-2 relative">Safety First</h3>
             <p className="text-sm text-white/40 relative">100% local execution via Ollama and isolated .tmp_envs workspaces.</p>
           </div>
           <div className="glass p-6 rounded-2xl border border-white/10 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-blue-500/5 blur-2xl group-hover:bg-blue-500/10 transition-colors" />
-            <Zap className="text-blue-400 mb-4 relative" />
+            <div className="absolute inset-0 bg-amber-500/5 blur-2xl group-hover:bg-amber-500/10 transition-colors" />
+            <Zap className="text-amber-400 mb-4 relative" />
             <h3 className="font-bold mb-2 relative">Self-Repairing</h3>
             <p className="text-sm text-white/40 relative">Autonomously resolves missing dependencies to ensure runtime health.</p>
           </div>
@@ -43,7 +43,7 @@ const sections = {
         </ul>
         <h3 className="text-xl font-bold mt-12 mb-4">Install via pip</h3>
         <div className="bg-black border border-white/10 p-6 rounded-2xl flex items-center justify-between group">
-          <code className="text-blue-400 font-mono">pip install devagent-cli</code>
+          <code className="text-amber-400 font-mono">pip install devagent-cli</code>
           <button className="p-2 hover:bg-white/5 rounded-lg transition-colors text-white/40 hover:text-white"><Copy size={18} /></button>
         </div>
       </div>
@@ -56,19 +56,19 @@ const sections = {
         <p className="text-white/60 leading-relaxed">Resolve your first bug with DevAgent in three simple steps.</p>
         <div className="space-y-12">
           <div className="flex gap-6">
-            <div className="w-10 h-10 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold shrink-0 border border-blue-500/20">1</div>
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold shrink-0 border border-amber-500/20">1</div>
             <div className="flex-1">
               <h4 className="text-xl font-bold mb-2">Check Infrastructure</h4>
               <p className="text-white/40 mb-4">Verify your local environment, model connectivity, and dependency health.</p>
-              <code className="bg-black p-4 rounded-xl border border-white/5 block text-blue-400 font-mono">devagent doctor</code>
+              <code className="bg-black p-4 rounded-xl border border-white/5 block text-amber-400 font-mono">devagent doctor</code>
             </div>
           </div>
           <div className="flex gap-6">
-            <div className="w-10 h-10 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold shrink-0 border border-blue-500/20">2</div>
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold shrink-0 border border-amber-500/20">2</div>
             <div className="flex-1">
               <h4 className="text-xl font-bold mb-2">Run a Task</h4>
               <p className="text-white/40 mb-4">Provide a natural language instruction to any local repository.</p>
-              <code className="bg-black p-4 rounded-xl border border-white/5 block text-blue-400 font-mono">devagent run --task "Fix the failing login tests"</code>
+              <code className="bg-black p-4 rounded-xl border border-white/5 block text-amber-400 font-mono">devagent run --task "Fix the failing login tests"</code>
             </div>
           </div>
         </div>
@@ -120,8 +120,8 @@ const sections = {
         <p className="text-white/60 leading-relaxed">Autonomous recovery from runtime failures.</p>
         <p className="text-white/40">If DevAgent encounters a `ModuleNotFoundError` or a dependency conflict during validation, it doesn't crash. It invokes the **Autonomous Repair Loop** to resolve missing packages and stabilize the environment in real-time.</p>
         <div className="mt-12 relative p-16 glass rounded-[3rem] border border-white/10 overflow-hidden text-center group">
-           <div className="absolute inset-0 bg-blue-500/5 blur-[100px] group-hover:bg-blue-500/10 transition-colors" />
-           <Cpu size={56} className="text-blue-400 mx-auto mb-8 relative" />
+           <div className="absolute inset-0 bg-amber-500/5 blur-[100px] group-hover:bg-amber-500/10 transition-colors" />
+           <Cpu size={56} className="text-amber-400 mx-auto mb-8 relative" />
            <h3 className="text-3xl font-black tracking-tight mb-4 relative">Self-Healing Infrastructure</h3>
            <p className="text-white/40 max-w-md mx-auto relative leading-relaxed">The agent proactively repairs the validation environment so you don't have to manage dependencies manually.</p>
         </div>
@@ -160,7 +160,7 @@ export default function Docs() {
                   onClick={() => setActiveSection(item.id)}
                   className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-3 border ${activeSection === item.id ? "bg-white/5 text-white border-white/10 shadow-lg shadow-white/[0.02]" : "text-white/30 border-transparent hover:text-white/60 hover:bg-white/[0.02]"}`}
                 >
-                  <item.icon size={18} className={activeSection === item.id ? "text-blue-400" : ""} />
+                  <item.icon size={18} className={activeSection === item.id ? "text-amber-400" : ""} />
                   {item.label}
                 </button>
               ))}
@@ -179,7 +179,7 @@ export default function Docs() {
                   onClick={() => setActiveSection(item.id)}
                   className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-3 border ${activeSection === item.id ? "bg-white/5 text-white border-white/10 shadow-lg shadow-white/[0.02]" : "text-white/30 border-transparent hover:text-white/60 hover:bg-white/[0.02]"}`}
                 >
-                  <item.icon size={18} className={activeSection === item.id ? "text-blue-400" : ""} />
+                  <item.icon size={18} className={activeSection === item.id ? "text-amber-400" : ""} />
                   {item.label}
                 </button>
               ))}
@@ -202,14 +202,14 @@ export default function Docs() {
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: 40 }}
-                  className="h-1 bg-blue-500 mb-6"
+                  className="h-1 bg-amber-500 mb-6"
                 />
                 <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-none">
                   {(sections as any)[activeSection].title}
                 </h1>
               </div>
               
-              <div className="prose prose-invert prose-blue max-w-none">
+              <div className="prose prose-invert prose-amber max-w-none">
                 {(sections as any)[activeSection].content}
               </div>
               

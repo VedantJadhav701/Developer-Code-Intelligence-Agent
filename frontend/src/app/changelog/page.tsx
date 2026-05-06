@@ -13,7 +13,7 @@ const TimelineEvent = ({ version, date, desc, delay }: any) => (
     className="relative pl-12 pb-16 last:pb-0"
   >
     <div className="absolute left-0 top-0 w-px h-full bg-white/10" />
-    <div className="absolute left-[-4px] top-2 w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
+    <div className="absolute left-[-4px] top-2 w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)]" />
     
     <div className="flex items-center gap-3 mb-2">
       <h3 className="text-2xl font-bold tracking-tight">{version}</h3>
