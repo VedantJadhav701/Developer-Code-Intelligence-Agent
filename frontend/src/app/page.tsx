@@ -10,7 +10,7 @@ import {
   Zap, 
   CheckCircle2, 
   ChevronRight, 
-  Github, 
+  Github as GithubIcon, 
   Copy, 
   Check, 
   ChevronDown,
@@ -39,7 +39,7 @@ const Nav = () => (
           href="https://github.com/VedantJadhav701/Developer-Code-Intelligence-Agent"
           className="px-5 py-2.5 rounded-full bg-white text-black text-sm font-bold hover:scale-105 transition-transform flex items-center gap-2"
         >
-          <Github size={18} /> Star on GitHub
+          <GithubIcon size={18} /> Star on GitHub
         </a>
       </div>
     </div>
