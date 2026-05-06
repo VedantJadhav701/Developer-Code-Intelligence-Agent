@@ -53,6 +53,8 @@ Previous attempts: {attempts}
 
 {history_summary}
 
+{project_structure}
+
 {retrieval_context}
 
 Decide the SINGLE next action. Choose ONE:
@@ -61,16 +63,18 @@ Decide the SINGLE next action. Choose ONE:
 - semantic_search: <query>
 - read_file: <relative_path>
 - write_file: <relative_path>
-- run_tests
+- surgical_patch: <file> | <SEARCH> | <REPLACE>
+- run_tests: <optional_path>
 - lint_code: <relative_path>
 - git_diff
 
 STRATEGY:
-1. START by using 'run_tests' or 'search_code' to find the bug.
-2. USE 'read_file' to see the code before you try to fix it.
-3. If 'run_tests' fails, FOCUS on the functions listed in 'FAILING FUNCTIONS DETECTED'.
-4. USE 'surgical_patch' for precise logic fixes. Format: surgical_patch: file.py | <SEARCH> | <REPLACE>
-5. If stagnant for >1 steps, PIVOT to a different file or function.
+1. START by using 'run_tests' to identify the exact failure location.
+2. USE 'read_file' on the failing file before attempting a fix.
+3. PREFER 'surgical_patch' for logic fixes. Format: file.py | <SEARCH> | <REPLACE>
+4. USE 'write_file' ONLY for creating brand new files.
+5. ALWAYS use full relative paths (e.g. benchmarks/math/calc.py).
+6. If tests pass but system errors remain, verify the file path is correct.
 
 Reply in this EXACT format (two lines only):
 THOUGHT: <your reasoning>
@@ -102,7 +106,7 @@ Fix the bug. Output ONLY the COMPLETE Python code.
 """
 
 EXTRACT_ACTION_PATTERN = re.compile(
-    r"ACTION:\s*(search_code|semantic_search|read_file|write_file|run_tests|lint_code|list_files|git_diff)\s*:?\s*(.*)",
+    r"ACTION:\s*(search_code|semantic_search|read_file|write_file|surgical_patch|run_tests|lint_code|list_files|git_diff)\s*:?\s*(.*)",
     re.IGNORECASE,
 )
 
@@ -375,6 +379,12 @@ class Agent:
         if self.state.plan:
             plan_context = f"CURRENT PLAN:\n{self.state.plan.get('raw_plan', 'No plan available')}"
 
+        # Get project structure summary
+        structure = ""
+        scan_step = next((h for h in self.state.history if h["action"] == "system_scan"), None)
+        if scan_step:
+            structure = f"FILE SYSTEM STRUCTURE:\n{scan_step['observation']}"
+
         prompt = THOUGHT_PROMPT.format(
             task=self.state.task,
             project_root=self.state.project_root,
@@ -384,6 +394,7 @@ class Agent:
             history_summary=history_summary,
             retrieval_context=retrieval_context,
             plan_context=plan_context,
+            project_structure=structure,
         )
 
         response = query(prompt)
@@ -600,11 +611,28 @@ class Agent:
                         return
 
     def _resolve_path(self, path: str) -> str:
-        """Resolve a relative path against the working root."""
+        """Resolve a relative path against the working root.
+        
+        Includes 'Path Anchoring' — if the file isn't at root, search for it
+        in subdirectories to prevent hallucination errors.
+        """
         root = self.state.working_root or self.state.project_root
         if os.path.isabs(path):
             return path
-        return os.path.join(root, path)
+        
+        target = os.path.join(root, path)
+        if os.path.exists(target):
+            return target
+            
+        # Path Anchoring: Look for the file elsewhere
+        filename = os.path.basename(path)
+        for r, _, files in os.walk(root):
+            if filename in files:
+                found_path = os.path.join(r, filename)
+                print(f"  [PATH] Auto-anchored '{path}' to '{os.path.relpath(found_path, root)}'")
+                return found_path
+                
+        return target
 
     @staticmethod
     def _strip_code_fences(text: str) -> str:
