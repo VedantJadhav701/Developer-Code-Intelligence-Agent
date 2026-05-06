@@ -41,7 +41,7 @@ jobs:
         with:
           generate_release_notes: true
           body: |
-            ## DevAgent v3.3.0 — High-Integrity Hardening 🛡️
+            ## DevAgent v3.3.1 — High-Integrity Hardening 🛡️
             
             This release transforms DevAgent into a robust, research-grade developer infrastructure.
             

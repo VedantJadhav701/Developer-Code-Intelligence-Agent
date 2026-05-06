@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "devagent-cli"
-version = "3.3.0"
+version = "3.3.1"
 description = "A local autonomous coding agent CLI powered by Ollama."
 readme = "README.md"
 requires-python = ">=3.11"
