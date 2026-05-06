@@ -53,6 +53,7 @@ class AgentConfig:
 
     # ── Feature flags ──
     sandbox: bool = True
+    dry_run: bool = False
     auto_commit: bool = False
     auto_push: bool = False       # DISABLED by default — safety first
     benchmark: bool = False
@@ -98,6 +99,7 @@ class AgentConfig:
             max_steps=getattr(args, "max_steps", 5),
             verbose=getattr(args, "verbose", False),
             sandbox=getattr(args, "sandbox", True),
+            dry_run=getattr(args, "dry_run", False),
             auto_commit=getattr(args, "auto_commit", False),
             auto_push=getattr(args, "auto_push", False),
             benchmark=getattr(args, "benchmark", False),

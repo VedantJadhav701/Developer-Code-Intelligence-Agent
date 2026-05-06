@@ -92,15 +92,24 @@ def cmd_run(args):
     # Sandbox setup
     sandbox = None
     working_root = root
-    if config.sandbox:
+    if config.sandbox or config.dry_run:
+        if config.dry_run:
+            console.print("[bold yellow][DRY RUN][/bold yellow] Agent will work in an isolated sandbox. No changes will be applied.")
         sandbox = SandboxManager(root)
         working_root = sandbox.create()
+
+    # Safety Snapshot
+    if not config.dry_run:
+        from devagent.utils.safety import SafetyManager
+        safety = SafetyManager(root)
+        safety.create_snapshot(task_id=config.task[:10].replace(" ", "_"))
 
     # Run agent
     agent = Agent(
         task=config.task,
         project_root=working_root,
         max_steps=config.max_steps,
+        dry_run=config.dry_run
     )
 
     start_time = time.time()
@@ -135,10 +144,19 @@ def cmd_run(args):
         for reason in final_state.confidence_reasons:
             console.print(f"  [dim]• {reason}[/dim]")
 
-    # Sandbox apply
+    # Sandbox apply / Dry Run
     if sandbox and sandbox.is_active:
+        if config.dry_run:
+            console.print("\n[bold yellow][DRY RUN][/bold yellow] Completed. No changes applied.")
+            # Show diffs anyway to show what would have happened
+            for i, patch in enumerate(final_state.patches_applied):
+                console.print(f"\n[bold]Proposed Patch #{i+1}[/bold] for [cyan]{patch.get('file', 'unknown')}[/cyan]:")
+                console.print(f"[dim]{patch.get('diff', 'No diff available')}[/dim]")
+            sandbox.destroy()
+            return 0
+
         if final_state.status == "success":
-            if getattr(args, "interactive", False):
+            if config.interactive:
                 console.print("\n[bold yellow][INTERACTIVE][/bold yellow] Reviewing changes...")
                 # Show diff for each applied patch
                 for i, patch in enumerate(final_state.patches_applied):
@@ -159,7 +177,7 @@ def cmd_run(args):
         sandbox.destroy()
 
     # Git operations
-    if final_state.status == "success" and config.auto_commit:
+    if final_state.status == "success" and config.auto_commit and not config.dry_run:
         _handle_git(root, config)
 
     return 0 if final_state.status == "success" else 1
@@ -231,6 +249,13 @@ def cmd_models(args):
         console.print("[red][ERROR][/red] Could not list Ollama models.")
     return 0
 
+def cmd_rollback(args):
+    """Implementation of 'devagent rollback' command."""
+    from devagent.utils.safety import SafetyManager
+    root = os.path.abspath(getattr(args, "root", "."))
+    safety = SafetyManager(root)
+    return 0 if safety.rollback() else 1
+
 def main():
     parser = argparse.ArgumentParser(description="DevAgent CLI — Professional local coding agent.")
     parser.add_argument("--version", action="version", version=f"DevAgent v{__version__}")
@@ -247,6 +272,7 @@ def main():
     run_parser.add_argument("--auto-commit", action="store_true", help="Auto-commit on success")
     run_parser.add_argument("--auto-push", action="store_true", help="Auto-push after commit")
     run_parser.add_argument("--interactive", "-i", action="store_true", help="Review changes before applying")
+    run_parser.add_argument("--dry-run", action="store_true", help="Run without applying any changes")
     run_parser.add_argument("--verbose", action="store_true", help="Verbose output")
 
     # Command: benchmark
@@ -259,6 +285,10 @@ def main():
 
     # Command: models
     subparsers.add_parser("models", help="List installed Ollama models")
+
+    # Command: rollback
+    roll_parser = subparsers.add_parser("rollback", help="Revert the last agent changes")
+    roll_parser.add_argument("--root", "-r", default=".", help="Project root")
 
     # Command: version
     subparsers.add_parser("version", help="Show version")
@@ -273,6 +303,8 @@ def main():
         sys.exit(cmd_doctor(args))
     elif args.command == "models":
         sys.exit(cmd_models(args))
+    elif args.command == "rollback":
+        sys.exit(cmd_rollback(args))
     elif args.command == "version":
         console.print(f"DevAgent CLI v{__version__}")
     else:

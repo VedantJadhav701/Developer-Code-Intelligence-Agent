@@ -115,16 +115,16 @@ devagent run --task "Fix the divide-by-zero bug" --root ./demo_project
 | `devagent models` | List available Ollama models |
 | `devagent version` | Show current version |
 
-### ✨ New: Trust & Safety
-
-#### 🛡️ Reliability Hardening (v3.2.1+)
-DevAgent is now built for **Enterprise-grade reliability** in complex projects:
-- **Path Anchoring**: Automatically corrects "root hallucinations." If the agent targets a file in a subdirectory but assumes it's at the root, the system auto-anchors it to the correct project location.
-- **Forensic Test Detection**: Built-in intelligence to "see through" environment noise. It detects successful test runs even if unrelated parts of the repository have collection errors.
-- **Confidence Scoring**: Every fix is graded (0-100%) based on test results, surgical precision, and self-review quality.
+### 🛡️ Reliability & Safety (v3.2.1+)
+DevAgent is built for **Enterprise-grade safety**:
+- **Dry Run Mode**: Use `--dry-run` to see what the agent *would* do without touching your files.
+- **Auto-Snapshot**: Creates a safety restore point before every run.
+- **Rollback**: Revert the last agent changes instantly with `devagent rollback`.
+- **Forensic Test Detection**: Detects successful test runs even in noisy environments.
+- **Path Anchoring**: Automatically corrects "root hallucinations" for subdirectories.
 
 #### 🕹️ Interactive Mode
-Run with `--interactive` (or `-i`) to review diffs before they are applied to your project.
+Run with `--interactive` (or `-i`) to review colorized diffs before they are applied to your project.
 ```bash
 devagent run --task "Fix bug" --interactive
 ```
@@ -136,6 +136,7 @@ devagent run --task "Fix bug" --interactive
 ```mermaid
 graph TD
     CLI[DevAgent CLI] --> Orchestrator[ReAct Orchestrator]
+    Orchestrator --> Safety[Safety Manager: Snapshots]
     Orchestrator --> Memory[Working Memory]
     Orchestrator --> Retrieval[Semantic Retrieval FAISS]
     Orchestrator --> Tools[Tool Suite: pytest, ripgrep, git]

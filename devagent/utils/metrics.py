@@ -36,6 +36,7 @@ class RunMetrics:
     end_time: float = 0.0
     total_steps: int = 0
     retries: int = 0
+    patch_rejections: int = 0
     successes: int = 0
     failures: int = 0
     total_latency_s: float = 0.0
@@ -88,6 +89,7 @@ class RunMetrics:
             "task": self.task[:100],
             "total_steps": self.total_steps,
             "retries": self.retries,
+            "patch_rejections": self.patch_rejections,
             "successes": self.successes,
             "failures": self.failures,
             "total_latency_s": round(self.total_latency_s, 2),

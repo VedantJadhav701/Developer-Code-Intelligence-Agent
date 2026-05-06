@@ -114,13 +114,14 @@ EXTRACT_ACTION_PATTERN = re.compile(
 class Agent:
     """ReAct agent with planner, retrieval, self-review, and sandbox support."""
 
-    def __init__(self, task: str, project_root: str = ".", max_steps: int = 5):
+    def __init__(self, task: str, project_root: str = ".", max_steps: int = 5, dry_run: bool = False):
         self.state = AgentState(
             task=task,
             project_root=os.path.abspath(project_root),
             max_steps=max_steps,
             working_root=os.path.abspath(project_root),
         )
+        self.dry_run = dry_run
         self.logger = AgentLogger(log_dir=os.path.join(project_root, "logs"))
         self.metrics = RunMetrics(task=task)
         self.memory = WorkingMemory()
@@ -556,6 +557,7 @@ class Agent:
             if approved:
                 return code_fix, review_text
 
+            self.metrics.patch_rejections += 1
             print(f"  [REVISE] Revising code (attempt {revision + 1})...")
             code_fix = revise_code(code_fix, review_text, self.state.task)
             code_fix = self._strip_code_fences(code_fix)
