@@ -12,9 +12,8 @@ export const Nav = () => (
     className="fixed top-0 w-full z-50 border-b border-white/10 bg-black/80 backdrop-blur-md"
   >
     <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-      <Link href="/" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
-        <Image src="/logo.png" alt="DevAgent Logo" width={56} height={56} className="rounded-xl shadow-lg shadow-white/5" />
-        <span className="text-2xl font-extrabold tracking-tighter">DevAgent <span className="text-white/30 font-medium ml-1 text-base tracking-normal">v3.4.1</span></span>
+      <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
+        <Image src="/logo.png" alt="DevAgent" width={180} height={60} className="object-contain" priority />
       </Link>
       <div className="hidden md:flex items-center gap-8">
         <Link href="/docs" className="text-sm font-semibold text-white/60 hover:text-white transition-colors">Docs</Link>

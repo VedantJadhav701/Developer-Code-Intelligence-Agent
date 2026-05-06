@@ -7,10 +7,9 @@ export const Footer = () => (
   <footer className="py-20 border-t border-white/10 bg-black">
     <div className="max-w-7xl mx-auto px-6">
       <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-        <div className="flex items-center gap-4">
-          <Image src="/logo.png" alt="DevAgent Logo" width={40} height={40} className="rounded-lg" />
-          <span className="text-xl font-bold tracking-tight">DevAgent</span>
-        </div>
+        <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
+          <Image src="/logo.png" alt="DevAgent" width={140} height={40} className="object-contain" />
+        </Link>
         <div className="flex gap-8 text-sm text-white/40">
           <Link href="/docs" className="hover:text-white transition-colors">Documentation</Link>
           <a href="https://github.com/VedantJadhav701/Developer-Code-Intelligence-Agent" className="hover:text-white transition-colors">GitHub</a>
