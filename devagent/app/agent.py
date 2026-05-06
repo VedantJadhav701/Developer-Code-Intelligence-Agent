@@ -21,6 +21,10 @@ import re
 import os
 import time
 from typing import Any
+from rich.console import Console
+from rich.panel import Panel
+
+console = Console()
 
 from devagent.app.llm import query, query_with_context
 from devagent.app.reviewer import review_code, revise_code
@@ -31,6 +35,7 @@ from devagent.app.memory import WorkingMemory, chunk_project, SemanticIndex
 from devagent.tools.search import search_code
 from devagent.tools.file_ops import read_file, write_file, list_files
 from devagent.tools.file_map import get_file_map
+from devagent.tools.env_detector import get_environment_info, repair_environment
 from devagent.tools.test_runner import run_tests
 from devagent.tools.linter import lint_code
 from devagent.tools.git_tools import git_diff, git_status
@@ -60,6 +65,8 @@ Current step: {step}/{max_steps}
 Decide the SINGLE next action. Choose ONE:
 - list_files: <relative_path>
 - get_file_map: <relative_path>
+- get_environment_info: <relative_path>
+- repair_environment: <package_name>
 - search_code: <keyword>
 - semantic_search: <query>
 - read_file: <relative_path>[:L<start>-<end>]
@@ -70,11 +77,13 @@ Decide the SINGLE next action. Choose ONE:
 - git_diff
 
 STRATEGY:
-1. START by using 'run_tests' to identify the failure.
-2. For large files (>50 lines), use 'get_file_map' FIRST to see the structure.
-3. USE 'read_file' with line ranges (e.g. file.py:L10-L50) for targeted reading.
-4. USE 'surgical_patch' for logic fixes. Format: file.py | <SEARCH> | <REPLACE>
-5. ALWAYS use full relative paths.
+1. START by using 'get_environment_info' to understand the project runtime.
+2. If tests fail with ModuleNotFoundError, use 'repair_environment' to fix the environment.
+3. USE 'run_tests' to identify logic failures.
+4. For large files (>50 lines), use 'get_file_map' FIRST to see the structure.
+5. USE 'read_file' with line ranges (e.g. file.py:L10-L50) for targeted reading.
+6. USE 'surgical_patch' for logic fixes. Format: file.py | <SEARCH> | <REPLACE>
+7. ALWAYS use full relative paths.
 
 Reply in this EXACT format (two lines only):
 THOUGHT: <your reasoning>
@@ -96,7 +105,7 @@ Fix the bug. Output ONLY the COMPLETE Python code.
 """
 
 EXTRACT_ACTION_PATTERN = re.compile(
-    r"ACTION:\s*(get_file_map|search_code|semantic_search|read_file|write_file|surgical_patch|run_tests|lint_code|list_files|git_diff)\s*:?\s*(.*)",
+    r"ACTION:\s*(get_file_map|get_environment_info|repair_environment|search_code|semantic_search|read_file|write_file|surgical_patch|run_tests|lint_code|list_files|git_diff)\s*:?\s*(.*)",
     re.IGNORECASE,
 )
 
@@ -268,8 +277,10 @@ class Agent:
 
         # STEP 2 — EXECUTE ACTION → OBSERVATION
         observation = self._execute_action(action_name, action_arg)
-        self.state.last_observation = observation
-        self.state.observations.append(observation[:2000])
+        self.state.last_observation = observation # Store and display result
+        obs_text = str(observation) if isinstance(observation, dict) else observation
+        self.state.observations.append(obs_text[:2000])
+        console.print(Panel(obs_text[:1000], title="Observation", border_style="green"))
         
         self.state.explanations.append({
             "type": "action",
@@ -329,10 +340,11 @@ class Agent:
         )
 
         # Store in history
+        obs_text = str(observation) if isinstance(observation, dict) else observation
         self.state.history.append({
             "step": step, "thought": thought,
             "action": action_name, "action_arg": action_arg,
-            "observation": observation[:500],
+            "observation": obs_text[:500],
             "review": review_text, "test_status": status,
         })
 
@@ -462,6 +474,12 @@ class Agent:
 
         elif action_name == "get_file_map":
             return get_file_map(action_arg, root)
+
+        elif action_name == "get_environment_info":
+            return get_environment_info(root)
+
+        elif action_name == "repair_environment":
+            return repair_environment(action_arg, root)
 
         elif action_name == "semantic_search":
             result = semantic_search(action_arg, root)

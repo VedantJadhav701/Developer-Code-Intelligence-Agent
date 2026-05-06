@@ -9,3 +9,4 @@ build/
 sandbox_workspace/
 .tmp*
 faiss_index/
+.devagent_env.json

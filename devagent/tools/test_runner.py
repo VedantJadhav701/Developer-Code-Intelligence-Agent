@@ -45,7 +45,28 @@ def run_tests(project_root: str = ".", test_path: str = "") -> tuple[int, str]:
         tf.write(config_content)
         temp_config = tf.name
 
-    cmd = ["python", "-m", "pytest", "-v", "--tb=short", "-c", temp_config]
+    # ENVIRONMENT AWARENESS: Use venv python if available
+    python_exe = "python"
+    fingerprint_path = os.path.join(project_root, ".devagent_env.json")
+    if os.path.exists(fingerprint_path):
+        try:
+            import json
+            with open(fingerprint_path, 'r') as f:
+                data = json.load(f)
+                # Look for a valid python exe in .tmp_envs
+                env_path = os.path.join(project_root, ".tmp_envs", "validation_env")
+                if not os.path.exists(env_path):
+                    # Fallback to test_env if that's what we used in the test
+                    env_path = os.path.join(project_root, ".tmp_envs", "test_env")
+                
+                v_exe = os.path.join(env_path, "Scripts", "python.exe") if os.name == "nt" else os.path.join(env_path, "bin", "python")
+                if os.path.exists(v_exe):
+                    python_exe = v_exe
+                    print(f"  [ENV] Using isolated runtime: {python_exe}")
+        except:
+            pass
+
+    cmd = [python_exe, "-m", "pytest", "-v", "--tb=short", "-c", temp_config]
     if test_path:
         cmd.append(test_path)
     else:

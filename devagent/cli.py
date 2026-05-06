@@ -142,7 +142,7 @@ def cmd_run(args):
     if final_state.confidence_reasons:
         console.print("\n[bold]Confidence Breakdown:[/bold]")
         for reason in final_state.confidence_reasons:
-            console.print(f"  [green]✓[/green] {reason}")
+            console.print(f"  [green]OK[/green] {reason}")
 
     # Explain Mode
     if config.explain and final_state.explanations:

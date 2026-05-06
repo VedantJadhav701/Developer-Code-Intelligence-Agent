@@ -38,12 +38,13 @@ class AgentLogger:
         patch_summary: str = "",
     ) -> None:
         """Log a complete agent iteration step."""
+        obs_text = str(observation) if isinstance(observation, dict) else observation
         entry = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "step": step,
             "thought": thought,
             "action": action,
-            "observation": observation[:2000],
+            "observation": obs_text[:2000],
             "review": review,
             "test_result": test_result[:2000],
             "latency": f"{latency:.2f}s" if latency else "",
