@@ -1,7 +1,7 @@
-<div align="center">
-
 # 🧠 DevAgent
 ### Execution-Grounded Orchestration for Autonomous Local Coding.
+
+![DevAgent Showcase](readme-image.png)
 
 [**🌐 Live Site**](https://devagent-cli.vercel.app/) • [**📦 PyPI**](https://pypi.org/project/devagent-cli/) • [**📜 Docs**](https://devagent-cli.vercel.app/docs)
 
