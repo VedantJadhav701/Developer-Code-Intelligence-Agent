@@ -4,27 +4,35 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "devagent-cli"
-version = "3.1.0"
-description = "Local autonomous coding agent powered by Ollama"
+version = "3.2.1-beta"
+description = "Professional Local autonomous coding agent powered by Ollama"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
   {name = "Vedant Jadhav"}
 ]
-keywords = ["ai", "agent", "coding", "ollama", "local", "devagent"]
+keywords = ["ai", "agent", "coding", "ollama", "local", "devagent", "devagent-cli"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Interpreters",
 ]
 dependencies = [
   "rich",
   "pytest",
-  "flake8",
+  "requests",
+]
+
+[project.optional-dependencies]
+semantic = [
   "sentence-transformers",
   "faiss-cpu",
-  "requests",
+]
+lint = [
+  "flake8",
 ]
 
 [project.scripts]

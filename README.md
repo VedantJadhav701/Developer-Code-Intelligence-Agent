@@ -89,13 +89,18 @@ DevAgent is a **real agent** with a retrieval-first, tool-grounded architecture:
 git clone https://github.com/VedantJadhav701/Developer-Code-Intelligence-Agent.git
 cd Developer-Code-Intelligence-Agent
 
-# 2. Install (Editable mode)
-pip install -e .
+# 2. Install
+pip install devagent-cli  # (Coming soon to PyPI)
+# Or locally: pip install -e .
 
-# 3. Pull the model
+# 3. Verify System (CRITICAL)
+# This checks your Python environment, Ollama connection, and dependencies
+devagent doctor
+
+# 4. Pull the model
 ollama pull qwen2.5-coder:3b
 
-# 4. Run!
+# 5. Run!
 devagent run --task "Fix the divide-by-zero bug" --root ./demo_project
 ```
 
