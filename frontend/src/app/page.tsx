@@ -40,9 +40,9 @@ const Nav = () => (
     className="fixed top-0 w-full z-50 border-b border-white/10 bg-black/80 backdrop-blur-md"
   >
     <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <Image src="/logo.png" alt="DevAgent Logo" width={32} height={32} className="rounded-lg" />
-        <span className="text-xl font-bold tracking-tight">DevAgent <span className="text-white/40 font-normal ml-1">v3.4.1</span></span>
+      <div className="flex items-center gap-4">
+        <Image src="/logo.png" alt="DevAgent Logo" width={56} height={56} className="rounded-xl shadow-lg shadow-white/5" />
+        <span className="text-2xl font-extrabold tracking-tighter">DevAgent <span className="text-white/30 font-medium ml-1 text-base tracking-normal">v3.4.1</span></span>
       </div>
       <div className="hidden md:flex items-center gap-8">
         {["Features", "Demo", "Benchmarks"].map((item) => (
@@ -171,9 +171,9 @@ const Footer = () => (
   <footer className="py-20 border-t border-white/10">
     <div className="max-w-7xl mx-auto px-6">
       <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-        <div className="flex items-center gap-3">
-          <Image src="/logo.png" alt="DevAgent Logo" width={24} height={24} />
-          <span className="font-bold">DevAgent</span>
+        <div className="flex items-center gap-4">
+          <Image src="/logo.png" alt="DevAgent Logo" width={40} height={40} className="rounded-lg" />
+          <span className="text-xl font-bold tracking-tight">DevAgent</span>
         </div>
         <div className="flex gap-8 text-sm text-white/40">
           <a href="#" className="hover:text-white">Privacy</a>
