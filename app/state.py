@@ -1,6 +1,9 @@
 """
 Shared state object for the agent.
 Single source of truth passed through every step of the ReAct loop.
+
+Implements both short-term memory (runtime state) and slots for
+long-term memory integration.
 """
 
 from __future__ import annotations
@@ -20,7 +23,7 @@ class AgentState:
 
     # --- iteration tracking ---
     current_step: int = 0
-    max_steps: int = 3
+    max_steps: int = 5
     status: str = "pending"  # pending | running | success | fail
 
     # --- file context ---
@@ -32,7 +35,7 @@ class AgentState:
     test_exit_code: int = -1
     lint_output: str = ""
 
-    # --- history ---
+    # --- history (short-term memory) ---
     history: list[dict[str, Any]] = field(default_factory=list)
 
     # --- last LLM outputs ---
@@ -44,6 +47,24 @@ class AgentState:
 
     # --- attempts counter ---
     attempts: int = 0
+
+    # --- retrieval context ---
+    retrieved_chunks: list[Any] = field(default_factory=list)
+
+    # --- planner output ---
+    plan: dict[str, Any] = field(default_factory=dict)
+
+    # --- patch tracking ---
+    patches_applied: list[dict[str, Any]] = field(default_factory=list)
+
+    # --- sandbox ---
+    sandbox_active: bool = False
+    working_root: str = ""  # actual root being modified (sandbox or real)
+
+    # --- thoughts / observations for memory ---
+    thoughts: list[str] = field(default_factory=list)
+    actions: list[str] = field(default_factory=list)
+    observations: list[str] = field(default_factory=list)
 
     def snapshot(self) -> dict[str, Any]:
         """Return a JSON-serialisable snapshot of the current state."""
@@ -58,6 +79,8 @@ class AgentState:
             "test_exit_code": self.test_exit_code,
             "attempts": self.attempts,
             "history_length": len(self.history),
+            "patches_applied": len(self.patches_applied),
+            "sandbox_active": self.sandbox_active,
         }
 
     def clone(self) -> "AgentState":

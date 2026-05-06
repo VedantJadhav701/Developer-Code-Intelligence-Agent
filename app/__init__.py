@@ -1,1 +1,1 @@
-# app package
+# app — core agent modules

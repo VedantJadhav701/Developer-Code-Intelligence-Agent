@@ -2,39 +2,34 @@
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
 *.egg-info/
-*.egg
 dist/
 build/
-.eggs/
+*.egg
 
 # Virtual environments
-.env
 .venv/
 venv/
-ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
 
 # Testing
 .pytest_cache/
 .coverage
 htmlcov/
+.mypy_cache/
 .tox/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# DevAgent runtime
+logs/
+sandbox_workspace/
+benchmarks/_tmp_*/
 
 # OS
 .DS_Store
 Thumbs.db
-
-# Agent runtime output
-logs/
-
-# Distribution
-*.tar.gz
-*.whl

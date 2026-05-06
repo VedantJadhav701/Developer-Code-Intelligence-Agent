@@ -1,0 +1,1 @@
+Fix the register_user function in user_service.py to validate that email contains '@' and name is not empty, so all tests pass.

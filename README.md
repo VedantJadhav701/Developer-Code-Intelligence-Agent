@@ -2,7 +2,7 @@
 
 # 🧠 DevAgent
 
-### The AI Coding Agent That Runs Entirely on Your Machine
+### A Lightweight Local Open-Source Miniature of Claude Code CLI
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
@@ -10,11 +10,11 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![GitHub stars](https://img.shields.io/github/stars/VedantJadhav701/Developer-Code-Intelligence-Agent?style=social)](https://github.com/VedantJadhav701/Developer-Code-Intelligence-Agent)
 
-**Give your codebase an AI teammate that finds bugs, writes fixes, reviews its own code, and validates with tests — all offline, all local, zero API costs.**
+**A production-grade local coding agent that finds bugs, writes patches, reviews its own code, and validates with tests — all offline, all local, zero API costs.**
 
 [Quick Start](#-quick-start) •
-[How It Works](#-how-it-works) •
-[Demo](#-demo) •
+[Architecture](#-architecture) •
+[Benchmarks](#-benchmarks) •
 [Roadmap](#-roadmap) •
 [Contributing](#-contributing)
 
@@ -24,39 +24,54 @@
 
 ## 🤔 Why DevAgent?
 
-Most AI coding tools are **chatbots** — they suggest code, you copy-paste, you pray it works.
+Most AI coding tools are **chatbots** — they suggest code, you copy-paste, you pray.
 
-DevAgent is different. It's a **real agent** that:
+DevAgent is a **real agent** with a retrieval-first, tool-grounded architecture:
 
 | | Chatbot | DevAgent |
 |---|---|---|
-| Searches your codebase | ❌ | ✅ ripgrep-powered |
-| Modifies files | ❌ | ✅ Reads, writes, patches |
-| Runs your tests | ❌ | ✅ pytest integration |
+| Searches your codebase | ❌ | ✅ ripgrep + semantic search |
+| Retrieves relevant code | ❌ | ✅ FAISS embeddings |
+| Plans before coding | ❌ | ✅ Planner layer |
+| Generates patches | ❌ | ✅ Unified diffs |
 | Reviews its own output | ❌ | ✅ Self-critique loop |
+| Runs your tests | ❌ | ✅ pytest integration |
 | Retries on failure | ❌ | ✅ Up to N iterations |
+| Works in sandbox | ❌ | ✅ Isolated workspace |
 | Works offline | ❌ | ✅ 100% local via Ollama |
 | Costs money | 💸 | ✅ Free forever |
 
-> **Philosophy:** Execution > Reasoning. Tools > Hallucination. Reliability > Intelligence.
+> **Philosophy:** Execution > Reasoning. Tools > Hallucination. Retrieval > Huge Context. Reliability > Intelligence.
 
 ---
 
 ## ✨ Features
 
-🔁 **ReAct Loop** — Structured Thought → Action → Observation → Fix → Review → Test cycle
+🔁 **ReAct Loop** — Thought → Action → Observation → Fix → Review → Test cycle
 
-🔍 **Code Search** — Finds relevant code using ripgrep (with fallback for any OS)
+🧠 **Planner** — LLM generates an action plan before coding
+
+🔍 **Semantic Search** — FAISS + sentence-transformers code retrieval
+
+🔎 **Code Search** — ripgrep-powered with cross-platform fallback
 
 📝 **Self-Review** — LLM critiques its own fixes, revises until approved
 
+🩹 **Patch Engine** — Line-level unified diffs instead of full file rewrites
+
 🧪 **Test-Driven** — Runs pytest after every fix, retries on failure
 
-📊 **Full Audit Trail** — Every step logged to `logs/run.json` as structured JSON
+🏖️ **Sandbox Mode** — Agent works in an isolated copy, applies changes only on success
+
+📊 **Benchmarks** — 5 built-in benchmark suites with automated evaluation
+
+📈 **Metrics** — Latency, token estimates, retries, and performance tracking
+
+📋 **Full Audit Trail** — Every step logged to `logs/run.json`
 
 🔒 **100% Offline** — Runs on Ollama with small models (2-4 GB)
 
-⚡ **Low Resource** — Works on 4 GB VRAM / 12 GB RAM
+⚡ **Low Resource** — Works on RTX 3050 (4 GB VRAM) / 16 GB RAM
 
 ---
 
@@ -77,123 +92,127 @@ cd Developer-Code-Intelligence-Agent
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Pull a model (if you don't have one)
-ollama pull qwen2.5:3b
+# 3. Pull the model
+ollama pull qwen2.5-coder:3b
 
 # 4. Run!
 python main.py --task "Fix the divide-by-zero bug in calculator.py" --root ./demo_project
 ```
 
-That's it. No API keys. No sign-ups. No cloud.
+No API keys. No sign-ups. No cloud.
+
+### Optional: Enable Semantic Search
+
+```bash
+pip install faiss-cpu sentence-transformers
+```
+
+Without these, DevAgent falls back to keyword search — still fully functional.
 
 ---
 
 ## 🎬 Demo
 
-### The agent fixes a real bug in 2 iterations:
-
 ```
+ ____              _                    _
+|  _ \  _____   __/ \   __ _  ___ _ __ | |_
+| | | |/ _ \ \ / / _ \ / _` |/ _ \ '_ \| __|
+| |_| |  __/\ V / ___ \ (_| |  __/ | | | |_
+|____/ \___| \_/_/   \_\__, |\___|_| |_|\__|
+                       |___/
+
 +==========================================================+
-|             DEVELOPER CODE INTELLIGENCE AGENT            |
-|                     Model: qwen2.5:3b                    |
+|        DEVELOPER CODE INTELLIGENCE AGENT                 |
+|        Model: qwen2.5-coder:3b                          |
+|        Sandbox: OFF                                      |
 +==========================================================+
 
-  Task: Fix the divide-by-zero bug in calculator.py
-  Project: ./demo_project
-  Max iterations: 3
+  [PLAN] LIKELY_FILES: calculator.py
+  1. search_code: divide
+  2. read_file: calculator.py
+  3. run_tests
 
   ----------------------------------------
-  ITERATION 1/3
+  ITERATION 1/5
   ----------------------------------------
   [TOOL] Executing: search_code(divide)
-  >> Found: calculator.py:18:def divide(a, b)
-  >> Tests: 1 failed, 4 passed
-
-  ----------------------------------------
-  ITERATION 2/3
-  ----------------------------------------
-  [TOOL] Executing: read_file(calculator.py)
-  >> Generated fix: Added zero-division guard
+  >> Found: calculator.py:10:def divide(a, b)
   [REVIEW] #1: APPROVED
   >> Tests: 5 passed ✓
 
   [OK]  AGENT COMPLETED SUCCESSFULLY
 
   Status:     success
-  Steps used: 2/3
-```
-
-### What the agent actually wrote:
-
-```diff
- def divide(a, b):
--    # BUG: No zero-division guard
--    return a / b
-+    if b == 0:
-+        raise ValueError("Cannot divide by zero")
-+    return a / b
+  Steps used: 1/5
+  Patches:    1
+  Time:       8.2s
 ```
 
 ---
 
-## 🏗️ How It Works
+## 🏗️ Architecture
 
 ```
-                    ┌─────────────────────────┐
-                    │      CLI (main.py)       │
-                    │   --task --root --model  │
-                    └───────────┬─────────────┘
-                                │
-                    ┌───────────▼─────────────┐
-                    │    ReAct Agent Loop      │
-                    │                         │
-                    │  1. THOUGHT   (LLM)     │
-                    │  2. ACTION    (Tool)     │
-                    │  3. OBSERVATION          │
-                    │  4. FIX       (LLM)     │
-                    │  5. REVIEW    (LLM)     │
-                    │  6. TEST     (pytest)    │
-                    │                         │
-                    │  if FAIL → retry        │
-                    │  if PASS → done ✓       │
-                    └──┬──────────────┬───────┘
+                    ┌─────────────────────────────┐
+                    │       CLI (main.py)          │
+                    │  --task --root --model       │
+                    │  --sandbox --benchmark       │
+                    │  --auto-commit --auto-push   │
+                    └──────────┬──────────────────┘
+                               │
+                    ┌──────────▼──────────────────┐
+                    │     Planner Layer            │
+                    │  Identifies files + strategy │
+                    └──────────┬──────────────────┘
+                               │
+                    ┌──────────▼──────────────────┐
+                    │  Retrieval Layer (Memory)    │
+                    │  FAISS + Sentence-Transformers│
+                    │  Chunk → Embed → Top-K       │
+                    └──────────┬──────────────────┘
+                               │
+                    ┌──────────▼──────────────────┐
+                    │     ReAct Agent Loop         │
+                    │                              │
+                    │  1. THOUGHT   (LLM)          │
+                    │  2. ACTION    (Tool)          │
+                    │  3. OBSERVATION               │
+                    │  4. FIX       (LLM)          │
+                    │  5. REVIEW    (LLM)          │
+                    │  6. PATCH     (Diff Engine)   │
+                    │  7. TEST      (pytest)        │
+                    │                              │
+                    │  if FAIL → retry              │
+                    │  if PASS → done ✓            │
+                    └──┬──────────────┬───────────┘
                        │              │
               ┌────────▼──┐    ┌──────▼──────┐
               │   Tools   │    │   Ollama    │
               │           │    │  (Local)    │
               │ • search  │    │             │
-              │ • read    │    │ qwen2.5:3b  │
-              │ • write   │    │ phi3:mini   │
+              │ • semantic│    │ qwen2.5-    │
+              │ • read    │    │  coder:3b   │
+              │ • patch   │    │ phi3:mini   │
               │ • pytest  │    │ mistral:7b  │
-              │ • flake8  │    │ gemma2:2b   │
-              └───────────┘    └─────────────┘
+              │ • flake8  │    │             │
+              │ • git_diff│    └─────────────┘
+              │ • sandbox │
+              └───────────┘
 ```
 
-### Shared State Object
+### 9-Layer Architecture
 
-The agent maintains a single state object passed through every step:
-
-```python
-state = {
-    "task": "Fix the divide-by-zero bug",
-    "current_file": "calculator.py",
-    "attempts": 2,
-    "status": "success",
-    "test_output": "5 passed",
-    "history": [...]
-}
-```
-
-### Self-Review Loop
-
-The agent doesn't just generate code — it **critiques its own output**:
-
-```
-LLM generates fix
-    → LLM reviews: "APPROVED" or "REVISE: missing edge case"
-        → If REVISE: regenerate with feedback
-        → If APPROVED: write to file and test
-```
+| Layer | Module | Purpose |
+|---|---|---|
+| 1. CLI | `main.py` | Argument parsing, mode selection, banner |
+| 2. Planner | `app/planner.py` | Task interpretation, file identification |
+| 3. Retrieval | `app/memory.py` | FAISS index, semantic chunking, Top-K search |
+| 4. Tools | `tools/*` | 8 real tools: search, semantic_search, read, write, test, lint, git, sandbox |
+| 5. Agent | `app/agent.py` | ReAct orchestration loop |
+| 6. Review | `app/reviewer.py` | Self-critique with APPROVED/REVISE |
+| 7. Validation | `tools/test_runner.py` | pytest + flake8 execution feedback |
+| 8. Logging | `utils/logger.py` | Structured JSON audit trail |
+| 9. Safety | `app/sandbox.py` | Isolated workspace, path validation |
 
 ---
 
@@ -203,21 +222,37 @@ LLM generates fix
 Developer-Code-Intelligence-Agent/
 ├── app/
 │   ├── agent.py            # Core ReAct agent engine
-│   ├── llm.py              # Ollama integration (Python SDK)
+│   ├── planner.py          # Task planning layer
 │   ├── reviewer.py         # Self-review module
+│   ├── llm.py              # Ollama integration
+│   ├── memory.py           # FAISS retrieval + working memory
+│   ├── patcher.py          # Unified diff patch engine
+│   ├── sandbox.py          # Sandbox workspace manager
 │   └── state.py            # Shared state dataclass
 ├── tools/
 │   ├── search.py           # Code search (ripgrep + fallbacks)
+│   ├── semantic_search.py  # FAISS semantic search
 │   ├── file_ops.py         # Safe file read/write
-│   └── test_runner.py      # pytest & flake8 runner
+│   ├── test_runner.py      # pytest runner
+│   ├── linter.py           # flake8 linter
+│   ├── git_tools.py        # Git diff/commit/push
+│   └── benchmark_runner.py # Benchmark evaluation
 ├── utils/
-│   └── logger.py           # Structured JSON logger
+│   ├── logger.py           # Structured JSON logger
+│   ├── config.py           # Centralized configuration
+│   └── metrics.py          # Performance metrics
+├── benchmarks/
+│   ├── divide_by_zero/     # Benchmark: zero division guard
+│   ├── missing_validation/ # Benchmark: input validation
+│   ├── syntax_error/       # Benchmark: syntax fix
+│   ├── import_bug/         # Benchmark: wrong import
+│   └── edge_case/          # Benchmark: empty list handling
+├── demo_project/           # Sample buggy project
 ├── docs/
-│   └── USER_GUIDE.md       # Full usage guide with examples
-├── demo_project/           # Sample buggy project for testing
-│   ├── calculator.py       #   └─ has intentional divide-by-zero bug
-│   └── test_calculator.py  #   └─ 5 tests (1 fails until fixed)
+│   └── USER_GUIDE.md       # Full usage guide
 ├── main.py                 # CLI entry point
+├── devagent.py             # Global CLI wrapper
+├── devagent.bat            # Windows global shortcut
 ├── requirements.txt
 ├── CONTRIBUTING.md
 ├── CHANGELOG.md
@@ -229,147 +264,117 @@ Developer-Code-Intelligence-Agent/
 
 ---
 
-## 💻 Use It on YOUR Project
-
-### Step 1: Clone DevAgent (one-time)
+## 💻 CLI Reference
 
 ```bash
-git clone https://github.com/VedantJadhav701/Developer-Code-Intelligence-Agent.git
-cd Developer-Code-Intelligence-Agent
-pip install -r requirements.txt
-ollama pull qwen2.5:3b   # if not already pulled
+python main.py --task "TASK" --root ./project [OPTIONS]
 ```
-
-### Step 2: Point it at your project
-
-```bash
-python main.py --task "DESCRIBE THE BUG OR TASK" --root /path/to/your/project
-```
-
-### Step 3: That's it — the agent works autonomously
-
-It will search → read → fix → review → test → done.
-
-### Real-World Examples
-
-```bash
-# Fix a specific bug
-python main.py -t "Fix the TypeError in user_service.py" -r ./backend
-
-# Fix a failing test
-python main.py -t "Fix test_create_user so it validates email format" -r ./api
-
-# Add error handling
-python main.py -t "Add try-except to the database connection in db.py" -r ./server
-
-# Handle edge cases
-python main.py -t "Handle empty list in process_batch function" -r ./pipeline
-
-# Use a stronger model for complex tasks
-python main.py -t "Refactor auth middleware to use JWT" -r ./api --model mistral:7b
-
-# More retry attempts for hard bugs
-python main.py -t "Make all tests pass" -r ./my-project --max-steps 5
-```
-
-### What your project needs
-
-| Requirement | Why |
-|---|---|
-| Python files (`.py`) | Agent searches and edits `.py` files |
-| pytest tests | Agent runs `pytest` to verify its fixes |
-
-> **Tip:** Always use `git stash` before running the agent, so you can `git diff` to see exactly what it changed.
-
-### All CLI Options
 
 | Flag | Default | Description |
 |---|---|---|
 | `--task`, `-t` | *(required)* | The coding task for the agent |
 | `--root`, `-r` | `.` | Project root directory |
-| `--max-steps`, `-m` | `3` | Max ReAct iterations |
-| `--model` | `qwen2.5:3b` | Any Ollama model |
+| `--model` | `qwen2.5-coder:3b` | Any Ollama model |
+| `--max-steps`, `-m` | `5` | Max ReAct iterations |
+| `--benchmark` | off | Run benchmark suite |
+| `--sandbox` | off | Run in isolated sandbox |
+| `--auto-commit` | off | Git commit on success |
+| `--auto-push` | off | Git push after commit |
+| `--verbose`, `-v` | off | Verbose output |
 
-> 📖 **[Full User Guide →](docs/USER_GUIDE.md)** — Detailed examples, tips, troubleshooting, and FAQ
+### Examples
+
+```bash
+# Fix a specific bug
+python main.py -t "Fix the TypeError in user_service.py" -r ./backend
+
+# Run in sandbox mode (safe — doesn't touch real files until success)
+python main.py -t "Fix divide-by-zero bug" -r ./project --sandbox
+
+# Auto-commit changes on success
+python main.py -t "Add input validation" -r ./api --auto-commit
+
+# Use a stronger model
+python main.py -t "Refactor auth middleware" -r ./server --model mistral:7b
+
+# Run benchmarks
+python main.py --benchmark
+
+# More retries for complex tasks
+python main.py -t "Make all tests pass" -r ./project --max-steps 10
+```
+
+> 📖 **[Full User Guide →](docs/USER_GUIDE.md)**
 
 ---
 
-## 📊 Structured Logs
+## 📊 Benchmarks
 
-Every run produces a complete audit trail at `logs/run.json`:
+DevAgent includes 5 built-in benchmarks to evaluate agent performance:
 
-```json
-[
-  {
-    "timestamp": "2026-05-06T00:08:33Z",
-    "step": 1,
-    "thought": "Need to find the divide function and check for zero handling",
-    "action": "search_code: divide",
-    "observation": "calculator.py:18:def divide(a, b): ...",
-    "review": "",
-    "test_result": "1 failed, 4 passed",
-    "status": "fail"
-  },
-  {
-    "timestamp": "2026-05-06T00:08:43Z",
-    "step": 2,
-    "thought": "Reading calculator.py to generate fix",
-    "action": "read_file: calculator.py",
-    "observation": "File content loaded",
-    "review": "APPROVED",
-    "test_result": "5 passed",
-    "status": "success"
-  }
-]
+| Benchmark | Bug Type | Difficulty |
+|---|---|---|
+| `divide_by_zero` | Missing guard clause | Easy |
+| `missing_validation` | No input validation | Medium |
+| `syntax_error` | Broken syntax | Medium |
+| `import_bug` | Wrong module name | Easy |
+| `edge_case` | Empty list crash | Medium |
+
+Run benchmarks:
+
+```bash
+python main.py --benchmark
+python main.py --benchmark --model phi3:mini
 ```
 
 ---
 
 ## 🔧 Supported Models
 
-Any Ollama model works. Tested and recommended:
-
 | Model | Size | Speed | Quality | Best For |
 |---|---|---|---|---|
-| `qwen2.5:3b` | 1.9 GB | ⚡ Fast | ★★★☆ | **Default — best balance** |
-| `qwen3:4b` | 2.5 GB | ⚡ Fast | ★★★★ | Better code understanding |
-| `gemma2:2b` | 1.6 GB | ⚡⚡ | ★★☆☆ | Ultra-low resource |
+| `qwen2.5-coder:3b` | 1.9 GB | ⚡ Fast | ★★★★ | **Default — best for code** |
+| `qwen2.5:3b` | 1.9 GB | ⚡ Fast | ★★★☆ | General fallback |
 | `phi3:mini` | 2.2 GB | ⚡ Fast | ★★★☆ | Good reasoning |
-| `llama3.2:3b` | 2.0 GB | ⚡ Fast | ★★★☆ | General purpose |
-| `mistral:7b` | 4.4 GB | 🐢 | ★★★★★ | Best quality (needs 8GB+) |
-| `qwen2.5:latest` | 4.7 GB | 🐢 | ★★★★★ | Best quality (needs 8GB+) |
+| `qwen3:4b` | 2.5 GB | ⚡ Fast | ★★★★ | Better understanding |
+| `gemma2:2b` | 1.6 GB | ⚡⚡ | ★★☆☆ | Ultra-low resource |
+| `mistral:7b` | 4.4 GB | 🐢 | ★★★★★ | Best quality (8GB+ RAM) |
 
 ---
 
 ## 🗺️ Roadmap
 
-We're building DevAgent in the open. Here's what's coming:
+### ✅ Completed (v2.0)
 
 - [x] Core ReAct agent loop
 - [x] Self-review module
-- [x] Tool system (search, read, write, test, lint)
-- [x] Structured JSON logging
-- [x] CLI interface
-- [ ] **Multi-file support** — Agent works across multiple files
-- [ ] **Git integration** — `git diff`, `git stash`, auto-commit
-- [ ] **RAG / Embeddings** — Codebase-aware context retrieval
+- [x] Tool system (9 tools)
+- [x] Planner layer
+- [x] Semantic retrieval (FAISS)
+- [x] Patch engine (unified diffs)
+- [x] Sandbox mode
+- [x] Benchmark system (5 suites)
+- [x] Metrics + structured logging
+- [x] Git integration
+- [x] CLI with all flags
+
+### 🔜 Coming Next
+
+- [ ] **Multi-file support** — Agent works across multiple files simultaneously
 - [ ] **Language support** — JavaScript, TypeScript, Go, Rust
 - [ ] **Plugin system** — Custom tools via YAML/Python
 - [ ] **Watch mode** — Auto-fix on test failure (`--watch`)
 - [ ] **VS Code extension** — Run agent from your editor
 - [ ] **Conversation memory** — Learn from past runs
-- [ ] **Multi-agent** — Planner + Coder + Reviewer agents
-
-Want to work on any of these? Check [CONTRIBUTING.md](CONTRIBUTING.md)!
+- [ ] **Multi-agent mode** — Planner + Coder + Reviewer + Evaluator agents
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions of all kinds! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ```bash
-# Fork → Clone → Branch → Code → Test → PR
 git checkout -b feature/your-feature
 # ... make changes ...
 python -m pytest demo_project/ -v
@@ -377,7 +382,7 @@ git commit -m "feat: your feature"
 git push origin feature/your-feature
 ```
 
-**Good first issues** are tagged and waiting for you:
+**Good first issues** are tagged and waiting:
 [Browse good first issues →](https://github.com/VedantJadhav701/Developer-Code-Intelligence-Agent/labels/good%20first%20issue)
 
 ---
@@ -390,7 +395,7 @@ MIT — use it however you want. See [LICENSE](LICENSE).
 
 ## ⭐ Star History
 
-If DevAgent helps you, please give it a star! It helps others discover the project.
+If DevAgent helps you, give it a star! It helps others discover the project.
 
 [![Star History Chart](https://api.star-history.com/svg?repos=VedantJadhav701/Developer-Code-Intelligence-Agent&type=Date)](https://star-history.com/#VedantJadhav701/Developer-Code-Intelligence-Agent&Date)
 
@@ -400,6 +405,6 @@ If DevAgent helps you, please give it a star! It helps others discover the proje
 
 **Built with 🧠 by [Vedant Jadhav](https://github.com/VedantJadhav701)**
 
-*If you find this useful, consider giving it a ⭐ — it means a lot!*
+*A lightweight local open-source miniature of Claude Code CLI.*
 
 </div>

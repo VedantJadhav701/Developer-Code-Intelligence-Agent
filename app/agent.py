@@ -1,27 +1,44 @@
 """
 Core ReAct Agent — the main execution engine.
 
-Implements the strict loop:
-  THOUGHT → ACTION → OBSERVATION → GENERATE FIX → SELF-REVIEW → TEST
-with up to max_steps iterations.
+Implements the full production loop:
+  PLAN → THOUGHT → ACTION → OBSERVATION → GENERATE FIX →
+  SELF-REVIEW → PATCH → TEST → RETRY
+
+Integrates:
+  - Planner layer
+  - Retrieval layer (semantic search + memory)
+  - Tool execution layer
+  - Self-review layer
+  - Patch engine
+  - Sandbox execution
+  - Metrics tracking
 """
 
 from __future__ import annotations
 
 import re
 import os
+import time
 from typing import Any
 
 from app.llm import query, query_with_context
 from app.reviewer import review_code, revise_code
 from app.state import AgentState
+from app.planner import generate_plan
+from app.patcher import generate_diff, apply_patch, format_diff_summary
+from app.memory import WorkingMemory, chunk_project, SemanticIndex
 from tools.search import search_code
 from tools.file_ops import read_file, write_file, list_files
-from tools.test_runner import run_tests, lint_code
+from tools.test_runner import run_tests
+from tools.linter import lint_code
+from tools.git_tools import git_diff, git_status
+from tools.semantic_search import semantic_search, build_index, get_relevant_chunks
 from utils.logger import AgentLogger
+from utils.metrics import RunMetrics, Timer
 
 
-# ── Prompt templates (kept SHORT for phi3:mini) ─────────────────────────────
+# ── Prompt templates (kept SHORT for small models) ───────────────────────────
 
 THOUGHT_PROMPT = """\
 You are a coding agent. Your task:
@@ -33,20 +50,24 @@ Previous attempts: {attempts}
 
 {history_summary}
 
+{retrieval_context}
+
 Decide the SINGLE next action. Choose ONE:
-- list_files: <relative_path> (example: list_files: .)
-- search_code: <keyword>  (example: search_code: divide)
-- read_file: <relative_path>  (example: read_file: calculator.py)
-- write_file: <relative_path>  (example: write_file: calculator.py)
-- run_tests  (no argument needed)
-- lint_code: <relative_path>  (example: lint_code: calculator.py)
+- list_files: <relative_path>
+- search_code: <keyword>
+- semantic_search: <query>
+- read_file: <relative_path>
+- write_file: <relative_path>
+- run_tests
+- lint_code: <relative_path>
+- git_diff
 
 STRATEGY:
-1. If you don't know where the bug is, use 'run_tests' first to find failing files.
-2. Use 'lint_code' to find syntax errors or style issues.
-3. Use 'search_code' with a SHORT keyword (e.g., "divide") to find code.
+1. If you don't know where the bug is, use 'run_tests' first.
+2. Use 'semantic_search' to find relevant code by meaning.
+3. Use 'search_code' with a SHORT keyword to find code.
 4. Use 'read_file' to understand the code before fixing.
-5. To CREATE a new file, call 'read_file' on the new path (it will return an error), then in the next step, the system will ask you for the content.
+5. Use 'lint_code' to find syntax errors.
 
 Reply in this EXACT format (two lines only):
 THOUGHT: <your reasoning>
@@ -62,58 +83,54 @@ CURRENT CODE:
 
 {error_context}
 
+{retrieval_context}
+
 RULES:
 1. Output the COMPLETE corrected file content from the VERY FIRST LINE to the LAST.
 2. DO NOT omit any functions, classes, or imports, even if they don't need fixing.
 3. ONLY fix what is needed — do NOT add new functions, classes, or imports.
 4. Keep the SAME file structure and function signatures.
 5. If a test expects a specific error message, use EXACTLY that message.
-6. Output ONLY Python code — no markdown fences, no explanations, no comments about what you fixed.
+6. Output ONLY Python code — no markdown fences, no explanations.
 7. Your output must be valid Python code that can be run immediately.
 """
 
 EXTRACT_ACTION_PATTERN = re.compile(
-    r"ACTION:\s*(search_code|read_file|write_file|run_tests|lint_code|list_files)\s*:?\s*(.*)",
+    r"ACTION:\s*(search_code|semantic_search|read_file|write_file|run_tests|lint_code|list_files|git_diff)\s*:?\s*(.*)",
     re.IGNORECASE,
 )
 
 
 class Agent:
-    """ReAct agent with self-review loop."""
+    """ReAct agent with planner, retrieval, self-review, and sandbox support."""
 
-    def __init__(self, task: str, project_root: str = ".", max_steps: int = 3):
+    def __init__(self, task: str, project_root: str = ".", max_steps: int = 5):
         self.state = AgentState(
             task=task,
             project_root=os.path.abspath(project_root),
             max_steps=max_steps,
+            working_root=os.path.abspath(project_root),
         )
         self.logger = AgentLogger(log_dir=os.path.join(project_root, "logs"))
-
-    def _initial_scan(self):
-        """Identify key files to give the agent immediate context."""
-        files = list_files(self.state.project_root, extension=".py")
-        if files:
-            # Filter to show only relative paths for the agent
-            rel_files = [os.path.relpath(f, self.state.project_root) for f in files]
-            self.state.history.append({
-                "step": 0,
-                "thought": "Initializing project scan.",
-                "action": "system_scan",
-                "observation": f"Found {len(rel_files)} Python files: {', '.join(rel_files[:10])}{'...' if len(rel_files) > 10 else ''}",
-                "review": "",
-                "test_result": "",
-                "status": "info"
-            })
+        self.metrics = RunMetrics(task=task)
+        self.memory = WorkingMemory()
+        self._semantic_index: SemanticIndex | None = None
 
     # ── Public entry point ───────────────────────────────────────────────
 
     def run(self) -> AgentState:
         """Execute the full agent loop. Returns final state."""
         self.state.status = "running"
-        self.logger.log_event("agent_start", {"task": self.state.task})
-        
-        # Immediate awareness of project structure
+        self.metrics.model = self._get_model()
+        self.logger.log_event("agent_start", {
+            "task": self.state.task,
+            "model": self.metrics.model,
+        })
+
+        # Phase 0: Initial scan + plan
         self._initial_scan()
+        self._build_retrieval_index()
+        self._run_planner()
 
         print("\n" + "=" * 60)
         print("  DEVELOPER CODE INTELLIGENCE AGENT")
@@ -121,6 +138,9 @@ class Agent:
         print(f"  Project: {self.state.project_root}")
         print(f"  Max iterations: {self.state.max_steps}")
         print("=" * 60)
+
+        if self.state.plan:
+            print(f"\n  [PLAN] {self.state.plan.get('raw_plan', '')[:200]}")
 
         for step in range(1, self.state.max_steps + 1):
             self.state.current_step = step
@@ -130,38 +150,92 @@ class Agent:
             print(f"  ITERATION {step}/{self.state.max_steps}")
             print(f"{'-' * 40}")
 
-            step_result = self._run_iteration(step)
+            with Timer() as t:
+                step_result = self._run_iteration(step)
+
+            self.metrics.record_step(
+                step=step,
+                action=self.state.last_action,
+                latency_s=t.elapsed,
+                prompt_chars=getattr(query, '_last_prompt_chars', 0),
+                response_chars=getattr(query, '_last_response_chars', 0),
+                status=step_result,
+            )
 
             if step_result == "success":
                 self.state.status = "success"
-                self.logger.log_event("agent_complete", {"status": "success", "steps": step})
+                self.metrics.finalize()
+                self.logger.log_event("agent_complete", {
+                    "status": "success", "steps": step,
+                    **self.metrics.summary(),
+                })
                 print("\n[OK]  AGENT COMPLETED SUCCESSFULLY")
                 return self.state
 
-        # exhausted all iterations
+        # Exhausted all iterations
         self.state.status = "fail"
-        self.logger.log_event("agent_complete", {"status": "fail", "steps": self.state.max_steps})
+        self.metrics.finalize()
+        self.logger.log_event("agent_complete", {
+            "status": "fail", "steps": self.state.max_steps,
+            **self.metrics.summary(),
+        })
         print("\n[FAIL]  AGENT FAILED -- max iterations reached")
         return self.state
+
+    # ── Phase 0: Initialization ──────────────────────────────────────────
+
+    def _initial_scan(self) -> None:
+        """Identify key files to give the agent immediate context."""
+        files = list_files(self.state.project_root, extension=".py")
+        if files:
+            rel_files = [os.path.relpath(f, self.state.project_root) for f in files]
+            self.state.history.append({
+                "step": 0, "thought": "Initializing project scan.",
+                "action": "system_scan",
+                "observation": f"Found {len(rel_files)} Python files: {', '.join(rel_files[:15])}",
+                "review": "", "test_result": "", "status": "info",
+            })
+
+    def _build_retrieval_index(self) -> None:
+        """Build semantic retrieval index for the project."""
+        try:
+            build_index(self.state.project_root)
+        except Exception as exc:
+            print(f"[RETRIEVAL] Index build skipped: {exc}")
+
+    def _run_planner(self) -> None:
+        """Run the planner to generate an action plan."""
+        files = list_files(self.state.project_root, extension=".py")
+        rel_files = [os.path.relpath(f, self.state.project_root) for f in files[:30]]
+        plan = generate_plan(self.state.task, rel_files)
+        self.state.plan = plan
 
     # ── Single iteration ─────────────────────────────────────────────────
 
     def _run_iteration(self, step: int) -> str:
         """Run one full ReAct iteration. Returns 'success' or 'continue'."""
 
-        # STEP 1 — THOUGHT + ACTION (combined LLM call)
+        # Retrieve relevant context for this step
+        self._retrieve_context()
+
+        # STEP 1 — THOUGHT + ACTION
         thought, action_name, action_arg = self._think(step)
         self.state.last_thought = thought
         self.state.last_action = f"{action_name}: {action_arg}"
+        self.state.thoughts.append(thought)
+        self.state.actions.append(f"{action_name}: {action_arg}")
 
         # STEP 2 — EXECUTE ACTION → OBSERVATION
         observation = self._execute_action(action_name, action_arg)
         self.state.last_observation = observation
+        self.state.observations.append(observation[:500])
 
         # STEP 3 — GENERATE FIX (if we have a file in context)
         code_fix = ""
         review_text = ""
-        if self.state.current_file and action_name in ("read_file", "search_code", "write_file"):
+        patch_summary = ""
+
+        if self.state.current_file and action_name in ("read_file", "search_code", "semantic_search", "write_file"):
             code_fix = self._generate_fix()
             self.state.last_code_fix = code_fix
 
@@ -170,24 +244,21 @@ class Agent:
                 code_fix, review_text = self._self_review(code_fix)
                 self.state.last_review = review_text
 
-                # Write the approved fix
-                write_result = write_file(self.state.current_file, code_fix)
-                observation += f"\n{write_result}"
+                # STEP 5 — APPLY PATCH
+                original = self.state.current_file_content or ""
+                patch_result = apply_patch(self.state.current_file, original, code_fix)
+                patch_summary = format_diff_summary(patch_result)
+                self.state.patches_applied.append(patch_result)
+                observation += f"\n{patch_summary}"
 
-        # STEP 5 — RUN TESTS
-        test_exit, test_output = run_tests(self.state.project_root)
+        # STEP 6 — RUN TESTS
+        test_exit, test_output = run_tests(self.state.working_root or self.state.project_root)
         self.state.test_exit_code = test_exit
         self.state.test_output = test_output
 
-        # Debug print
-        print(f"  [DEBUG] Pytest exit code: {test_exit}")
-
         # Determine success
-        if test_exit == 0:
-            if "collected 0 items" in test_output:
-                status = "fail"  # No tests found/run, likely collection error
-            else:
-                status = "success"
+        if test_exit == 0 and "collected 0 items" not in test_output:
+            status = "success"
         else:
             status = "fail"
 
@@ -200,29 +271,42 @@ class Agent:
             review=review_text,
             test_result=test_output,
             status=status,
+            latency=getattr(query, '_last_latency', 0),
+            model=self._get_model(),
+            patch_summary=patch_summary,
         )
 
         # Store in history
         self.state.history.append({
-            "step": step,
-            "thought": thought,
-            "action": action_name,
-            "action_arg": action_arg,
+            "step": step, "thought": thought,
+            "action": action_name, "action_arg": action_arg,
             "observation": observation[:500],
-            "review": review_text,
-            "test_status": status,
+            "review": review_text, "test_status": status,
         })
 
         return status
 
+    # ── Retrieval ────────────────────────────────────────────────────────
+
+    def _retrieve_context(self) -> None:
+        """Retrieve relevant code chunks for the current task."""
+        chunks = get_relevant_chunks(self.state.task, top_k=3)
+        if chunks:
+            self.memory.add_retrieval(chunks)
+
+    def _get_retrieval_context(self) -> str:
+        """Format retrieved context for prompts."""
+        ctx = self.memory.get_context(max_chars=1500)
+        if ctx:
+            return f"RETRIEVED CONTEXT:\n{ctx}"
+        return ""
+
     # ── THOUGHT phase ────────────────────────────────────────────────────
 
     def _think(self, step: int) -> tuple[str, str, str]:
-        """Ask the LLM to decide the next action.
-
-        Returns (thought, action_name, action_arg).
-        """
+        """Ask the LLM to decide the next action."""
         history_summary = self._format_history()
+        retrieval_context = self._get_retrieval_context()
 
         prompt = THOUGHT_PROMPT.format(
             task=self.state.task,
@@ -231,6 +315,7 @@ class Agent:
             max_steps=self.state.max_steps,
             attempts=self.state.attempts,
             history_summary=history_summary,
+            retrieval_context=retrieval_context,
         )
 
         response = query(prompt)
@@ -239,31 +324,25 @@ class Agent:
         # Fallback logic
         if not action_name:
             if not self.state.current_file:
-                # Try to extract a filename from the task
                 file_hint = self._extract_filename_from_task()
                 if file_hint and step > 1:
-                    action_name = "read_file"
-                    action_arg = file_hint
+                    action_name, action_arg = "read_file", file_hint
                     thought = f"Falling back to reading {file_hint} directly."
                 else:
                     action_name = "search_code"
-                    # Extract a keyword from the task, not the whole thing
                     action_arg = self._extract_search_keyword()
                     thought = "Falling back to keyword search."
             else:
-                action_name = "run_tests"
-                action_arg = ""
+                action_name, action_arg = "run_tests", ""
                 thought = "Falling back to run_tests."
 
-        # Sanitize: strip quotes from action_arg
         action_arg = action_arg.strip('"').strip("'")
 
-        # Smart retry: if we searched with same query before, switch to read_file
+        # Dedup: if same action tried before, try alternate
         if action_name == "search_code" and self._already_tried(action_name, action_arg):
             file_hint = self._extract_filename_from_task()
             if file_hint:
-                action_name = "read_file"
-                action_arg = file_hint
+                action_name, action_arg = "read_file", file_hint
                 thought = f"Search already tried. Reading {file_hint} directly."
 
         return thought, action_name, action_arg
@@ -271,21 +350,14 @@ class Agent:
     def _parse_thought_response(self, response: str) -> tuple[str, str, str]:
         """Extract thought and action from LLM response."""
         thought = ""
-        action_name = ""
-        action_arg = ""
-
-        # Extract THOUGHT line
         for line in response.splitlines():
             if line.strip().upper().startswith("THOUGHT:"):
                 thought = line.split(":", 1)[1].strip()
                 break
 
-        # Extract ACTION line
         match = EXTRACT_ACTION_PATTERN.search(response)
-        if match:
-            action_name = match.group(1).lower().strip()
-            action_arg = match.group(2).strip()
-
+        action_name = match.group(1).lower().strip() if match else ""
+        action_arg = match.group(2).strip() if match else ""
         return thought, action_name, action_arg
 
     # ── ACTION execution ─────────────────────────────────────────────────
@@ -293,48 +365,54 @@ class Agent:
     def _execute_action(self, action_name: str, action_arg: str) -> str:
         """Execute a tool and return the observation string."""
         print(f"  [TOOL] Executing: {action_name}({action_arg})")
+        root = self.state.working_root or self.state.project_root
 
         if action_name == "search_code":
-            result = search_code(action_arg, self.state.project_root)
-            # Try to extract a file path from search results
+            result = search_code(action_arg, root)
+            self._extract_file_from_search(result)
+            return result
+
+        elif action_name == "semantic_search":
+            result = semantic_search(action_arg, root)
+            # Try to extract file from results
             self._extract_file_from_search(result)
             return result
 
         elif action_name == "read_file":
             path = self._resolve_path(action_arg)
             content = read_file(path)
-            # Set context even if it's an error (allows creating new files)
             self.state.current_file = path
-            self.state.current_file_content = "" if content.startswith("[ERROR] File not found") else content
+            self.state.current_file_content = "" if content.startswith("[ERROR]") else content
             return content
 
         elif action_name == "write_file":
-            # Set context and let the loop's fix generator handle it
             path = self._resolve_path(action_arg)
             self.state.current_file = path
             if not self.state.current_file_content:
-                 self.state.current_file_content = ""
-            return f"[OK] Targeting {path} for writing. Content will be generated in the next step."
+                self.state.current_file_content = ""
+            return f"[OK] Targeting {path} for writing."
 
         elif action_name == "run_tests":
-            exit_code, output = run_tests(self.state.project_root)
+            exit_code, output = run_tests(root)
             self.state.test_exit_code = exit_code
             self.state.test_output = output
             return output
 
         elif action_name == "lint_code":
             path = self._resolve_path(action_arg)
-            exit_code, output = lint_code(path)
+            _, output = lint_code(path)
             return output
-            
+
         elif action_name == "list_files":
             path = self._resolve_path(action_arg)
             files = list_files(path)
             if not files:
                 return f"[INFO] No .py files found in {action_arg}"
-            # Return relative paths for readability
-            rel_files = [os.path.relpath(f, self.state.project_root) for f in files]
+            rel_files = [os.path.relpath(f, root) for f in files]
             return f"Found {len(rel_files)} files: " + ", ".join(rel_files[:20])
+
+        elif action_name == "git_diff":
+            return git_diff(root)
 
         else:
             return f"[ERROR] Unknown action: {action_name}"
@@ -347,43 +425,36 @@ class Agent:
         if self.state.test_output and self.state.test_exit_code != 0:
             error_context = f"TEST ERRORS:\n{self.state.test_output[:1000]}"
 
+        retrieval_context = self._get_retrieval_context()
+
         prompt = FIX_PROMPT.format(
             task=self.state.task,
             file_path=self.state.current_file,
             file_content=self.state.current_file_content[:2000],
             error_context=error_context,
+            retrieval_context=retrieval_context,
         )
 
         fix = query(prompt)
-
-        # Strip markdown code fences if the LLM wrapped them
-        fix = self._strip_code_fences(fix)
-        return fix
+        return self._strip_code_fences(fix)
 
     # ── SELF-REVIEW loop ─────────────────────────────────────────────────
 
     def _self_review(self, code_fix: str, max_revisions: int = 2) -> tuple[str, str]:
-        """Self-review loop: critique → revise until APPROVED.
-
-        Returns (final_code, review_text).
-        """
+        """Self-review loop: critique → revise until APPROVED."""
         for revision in range(max_revisions):
             approved, review_text = review_code(
-                self.state.current_file_content,
-                code_fix,
-                self.state.task,
+                self.state.current_file_content, code_fix, self.state.task,
             )
             print(f"  [REVIEW] #{revision + 1}: {review_text[:100]}")
 
             if approved:
                 return code_fix, review_text
 
-            # REVISE
             print(f"  [REVISE] Revising code (attempt {revision + 1})...")
             code_fix = revise_code(code_fix, review_text, self.state.task)
             code_fix = self._strip_code_fences(code_fix)
 
-        # If we exhausted revisions, use the last version
         return code_fix, f"Auto-approved after {max_revisions} revisions"
 
     # ── Helpers ───────────────────────────────────────────────────────────
@@ -394,20 +465,18 @@ class Agent:
             return "No previous actions."
 
         lines = ["PROJECT CONTEXT:"]
-        # Include scan results if present
         scan_step = next((h for h in self.state.history if h["action"] == "system_scan"), None)
         if scan_step:
             lines.append(f"  {scan_step['observation']}")
 
         lines.append("\nPREVIOUS ACTIONS:")
-        # Only show last 3 REAL steps (excluding scan)
         real_steps = [h for h in self.state.history if h["action"] != "system_scan"]
         for h in real_steps[-3:]:
             lines.append(
                 f"  Step {h['step']}: {h['action']}({h.get('action_arg', '')}) "
-                f"-> {h.get('status', 'info')}"
+                f"-> {h.get('status', h.get('test_status', 'info'))}"
             )
-            
+
         if self.state.test_output and self.state.test_exit_code != 0:
             lines.append(f"\nLAST TEST ERROR:\n{self.state.test_output[:500]}")
 
@@ -415,28 +484,23 @@ class Agent:
 
     def _extract_file_from_search(self, search_output: str) -> None:
         """Try to find a file path in search output and set it as current."""
+        root = self.state.working_root or self.state.project_root
         for line in search_output.splitlines():
-            # ripgrep format: path:line:content
             if ":" in line:
                 candidate = line.split(":")[0].strip()
-                if candidate.endswith(".py") and os.path.isfile(
-                    os.path.join(self.state.project_root, candidate)
-                ):
-                    full = os.path.join(self.state.project_root, candidate)
-                    self.state.current_file = full
-                    self.state.current_file_content = read_file(full)
-                    return
-                # Also try as absolute path
-                if os.path.isfile(candidate):
-                    self.state.current_file = candidate
-                    self.state.current_file_content = read_file(candidate)
-                    return
+                if candidate.endswith(".py"):
+                    full = os.path.join(root, candidate) if not os.path.isabs(candidate) else candidate
+                    if os.path.isfile(full):
+                        self.state.current_file = full
+                        self.state.current_file_content = read_file(full)
+                        return
 
     def _resolve_path(self, path: str) -> str:
-        """Resolve a relative path against the project root."""
+        """Resolve a relative path against the working root."""
+        root = self.state.working_root or self.state.project_root
         if os.path.isabs(path):
             return path
-        return os.path.join(self.state.project_root, path)
+        return os.path.join(root, path)
 
     @staticmethod
     def _strip_code_fences(text: str) -> str:
@@ -444,9 +508,7 @@ class Agent:
         text = text.strip()
         if text.startswith("```"):
             lines = text.splitlines()
-            # Remove first line (```python or ```)
             lines = lines[1:]
-            # Remove last line if it's ```
             if lines and lines[-1].strip() == "```":
                 lines = lines[:-1]
             text = "\n".join(lines)
@@ -454,29 +516,29 @@ class Agent:
 
     def _extract_filename_from_task(self) -> str:
         """Extract a .py filename mentioned in the task description."""
-        import re as _re
-        match = _re.search(r"(\w+\.py)", self.state.task)
-        if match:
-            return match.group(1)
-        return ""
+        match = re.search(r"(\w+\.py)", self.state.task)
+        return match.group(1) if match else ""
 
     def _extract_search_keyword(self) -> str:
-        """Extract a short, meaningful keyword from the task for searching."""
+        """Extract a short keyword from the task for searching."""
         task = self.state.task.lower()
-        # Common code-related keywords to look for
         for keyword in ["divide", "add", "subtract", "multiply", "error",
-                        "bug", "fix", "test", "function", "class", "import"]:
+                        "bug", "fix", "test", "function", "class", "import",
+                        "validate", "parse", "process", "batch", "register"]:
             if keyword in task:
                 return keyword
-        # Fallback: use first significant word
         words = [w for w in task.split() if len(w) > 3 and w not in
                  ("the", "that", "this", "with", "from", "should", "when")]
         return words[0] if words else "def"
 
     def _already_tried(self, action_name: str, action_arg: str) -> bool:
-        """Check if we already tried this exact action in a previous step."""
+        """Check if we already tried this exact action."""
         for h in self.state.history:
             if h.get("action") == action_name and h.get("action_arg") == action_arg:
                 return True
         return False
 
+    def _get_model(self) -> str:
+        """Get the current model name."""
+        from app.llm import MODEL
+        return MODEL

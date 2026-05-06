@@ -1,10 +1,13 @@
 """
 Developer Code Intelligence Agent — CLI Entry Point.
 
+A lightweight local open-source coding agent inspired by Claude Code CLI.
+Runs fully offline via Ollama on low-end hardware.
+
 Usage:
-    python main.py --task "Fix the divide-by-zero bug in calculator.py"
-    python main.py --task "Add input validation to user_service.py" --root ./my_project
-    python main.py --task "Make all tests pass" --max-steps 5
+    python main.py --task "Fix the divide-by-zero bug" --root ./demo_project
+    python main.py --task "Add input validation" --root ./project --sandbox
+    python main.py --benchmark
 """
 
 from __future__ import annotations
@@ -12,6 +15,7 @@ from __future__ import annotations
 import argparse
 import sys
 import os
+import time
 
 # Fix Windows console encoding
 if sys.stdout.encoding != "utf-8":
@@ -20,109 +24,176 @@ if sys.stdout.encoding != "utf-8":
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 from app.agent import Agent
+from app.sandbox import SandboxManager
+from tools.git_tools import is_git_repo, git_commit, git_push, git_diff
+from utils.config import AgentConfig, MODELS
+from utils.metrics import RunMetrics
+
+
+BANNER = r"""
+ ____              _                    _
+|  _ \  _____   __/ \   __ _  ___ _ __ | |_
+| | | |/ _ \ \ / / _ \ / _` |/ _ \ '_ \| __|
+| |_| |  __/\ V / ___ \ (_| |  __/ | | | |_
+|____/ \___| \_/_/   \_\__, |\___|_| |_|\__|
+                       |___/
+"""
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="DevAgent — A smart, autonomous local developer powered by Ollama.\n"
-                    "Analyzes project context and solves complex coding tasks offline.",
+        description="DevAgent — A production-grade local coding agent powered by Ollama.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""\
 Examples:
-  python main.py --task "Fix the failing test in test_math.py"
-  python main.py --task "Add error handling to api.py" --root ./backend
-  python main.py --task "Refactor utils.py to reduce duplication" --max-steps 5
+  python main.py --task "Fix the failing test" --root ./project
+  python main.py --task "Add error handling" --root ./backend --model qwen2.5-coder:3b
+  python main.py --benchmark
+  python main.py --task "Fix bug" --root ./project --sandbox --auto-commit
         """,
     )
-    parser.add_argument(
-        "--task", "-t",
-        required=True,
-        help="The coding task for the agent to complete.",
-    )
-    parser.add_argument(
-        "--root", "-r",
-        default=".",
-        help="Project root directory (default: current directory).",
-    )
-    parser.add_argument(
-        "--max-steps", "-m",
-        type=int,
-        default=3,
-        help="Maximum ReAct iterations (default: 3).",
-    )
-    parser.add_argument(
-        "--model",
-        default="qwen2.5:3b",
-        help="Ollama model to use (default: qwen2.5:3b).",
-    )
+
+    # Core flags
+    parser.add_argument("--task", "-t", default="", help="The coding task for the agent.")
+    parser.add_argument("--root", "-r", default=".", help="Project root directory (default: cwd).")
+    parser.add_argument("--model", default=MODELS["primary"], help=f"Ollama model (default: {MODELS['primary']}).")
+    parser.add_argument("--max-steps", "-m", type=int, default=5, help="Maximum ReAct iterations (default: 5).")
+
+    # Feature flags
+    parser.add_argument("--benchmark", action="store_true", help="Run benchmark suite instead of a task.")
+    parser.add_argument("--sandbox", action="store_true", help="Run in sandbox mode (copy project first).")
+    parser.add_argument("--auto-commit", action="store_true", help="Auto-commit on success.")
+    parser.add_argument("--auto-push", action="store_true", help="Auto-push after commit (disabled by default).")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output.")
 
     args = parser.parse_args()
+    config = AgentConfig.from_cli(args)
 
-    # Validate project root
-    root = os.path.abspath(args.root)
+    # ── Benchmark mode ────────────────────────────────────────────────
+    if config.benchmark:
+        return _run_benchmark(config)
+
+    # ── Task mode ─────────────────────────────────────────────────────
+    if not config.task:
+        parser.error("--task is required (or use --benchmark)")
+        return 1
+
+    root = os.path.abspath(config.project_root)
     if not os.path.isdir(root):
         print(f"[ERROR] Project root not found: {root}")
         return 1
 
-    # Override model if specified
-    if args.model != "qwen2.5:3b":
-        import app.llm as llm_module
-        llm_module.MODEL = args.model
+    # Set model
+    import app.llm as llm_module
+    llm_module.set_model(config.model)
 
-    print("\n" + "+" + "=" * 58 + "+")
+    # Print banner
+    print(BANNER)
+    print("+" + "=" * 58 + "+")
     print("|" + "  DEVELOPER CODE INTELLIGENCE AGENT".center(58) + "|")
-    print("|" + f"  Model: {args.model}".center(58) + "|")
+    print("|" + f"  Model: {config.model}".center(58) + "|")
+    print("|" + f"  Sandbox: {'ON' if config.sandbox else 'OFF'}".center(58) + "|")
     print("+" + "=" * 58 + "+")
 
-    # Run the agent
+    # ── Sandbox setup ─────────────────────────────────────────────────
+    sandbox = None
+    working_root = root
+    if config.sandbox:
+        sandbox = SandboxManager(root)
+        working_root = sandbox.create()
+
+    # ── Run agent ─────────────────────────────────────────────────────
     agent = Agent(
-        task=args.task,
-        project_root=root,
-        max_steps=args.max_steps,
+        task=config.task,
+        project_root=working_root,
+        max_steps=config.max_steps,
     )
 
+    start_time = time.time()
     final_state = agent.run()
+    elapsed = time.time() - start_time
 
-    # Print summary
+    # ── Save metrics ──────────────────────────────────────────────────
+    metrics_path = agent.metrics.save(os.path.join(root, "logs"))
+
+    # ── Print summary ─────────────────────────────────────────────────
     print("\n" + "-" * 60)
     print("  FINAL SUMMARY")
     print("-" * 60)
     print(f"  Status:     {final_state.status}")
     print(f"  Steps used: {final_state.current_step}/{final_state.max_steps}")
     print(f"  Attempts:   {final_state.attempts}")
+    print(f"  Time:       {elapsed:.1f}s")
     if final_state.current_file:
         print(f"  Last file:  {final_state.current_file}")
+    if final_state.patches_applied:
+        print(f"  Patches:    {len(final_state.patches_applied)}")
     print(f"  Log file:   {os.path.join(root, 'logs', 'run.json')}")
+    if metrics_path:
+        print(f"  Metrics:    {metrics_path}")
     print("-" * 60)
 
-    # Automatic Git Management
-    if final_state.status == "success":
-        print("\n[GIT] Task successful. Staging changes...")
-        try:
-            # Check if it's a git repo
-            import subprocess
-            is_repo = subprocess.run(["git", "rev-parse", "--is-inside-work-tree"], 
-                                     cwd=root, capture_output=True, text=True).returncode == 0
-            
-            if is_repo:
-                subprocess.run(["git", "add", "-A"], cwd=root)
-                commit_msg = f"agent fix: {args.task[:50]}..."
-                subprocess.run(["git", "commit", "-m", commit_msg], cwd=root)
-                print(f"[GIT] Committed: {commit_msg}")
-                
-                # Try to push
-                print("[GIT] Pushing to remote...")
-                push_res = subprocess.run(["git", "push"], cwd=root, capture_output=True, text=True)
-                if push_res.returncode == 0:
-                    print("[GIT] Successfully pushed to remote.")
-                else:
-                    print(f"[GIT] Push failed (perhaps no remote set?): {push_res.stderr.strip()}")
+    # ── Sandbox apply ─────────────────────────────────────────────────
+    if sandbox and sandbox.is_active:
+        if final_state.status == "success":
+            print("\n[SANDBOX] Applying changes to real project...")
+            result = sandbox.apply_to_project()
+            if result["applied"]:
+                print(f"[SANDBOX] Applied {len(result['applied'])} file(s):")
+                for f in result["applied"]:
+                    print(f"  - {f}")
             else:
-                print("[GIT] Not a git repository. Skipping commit.")
-        except Exception as e:
-            print(f"[GIT] Error during git operations: {e}")
+                print("[SANDBOX] No changes to apply.")
+        sandbox.destroy()
+
+    # ── Git operations ────────────────────────────────────────────────
+    if final_state.status == "success" and config.auto_commit:
+        _handle_git(root, config)
 
     return 0 if final_state.status == "success" else 1
+
+
+def _run_benchmark(config: AgentConfig) -> int:
+    """Run the benchmark suite."""
+    from tools.benchmark_runner import run_benchmarks
+
+    agent_dir = os.path.dirname(os.path.abspath(__file__))
+    benchmarks_dir = os.path.join(agent_dir, "benchmarks")
+
+    print(BANNER)
+    print("+" + "=" * 58 + "+")
+    print("|" + "  BENCHMARK MODE".center(58) + "|")
+    print("|" + f"  Model: {config.model}".center(58) + "|")
+    print("+" + "=" * 58 + "+")
+
+    import app.llm as llm_module
+    llm_module.set_model(config.model)
+
+    report = run_benchmarks(benchmarks_dir, model=config.model, max_steps=config.max_steps)
+    report.print_report()
+    report_path = report.save(os.path.join(agent_dir, "logs"))
+    print(f"\n[BENCHMARK] Report saved to: {report_path}")
+
+    return 0 if report.pass_rate >= 80 else 1
+
+
+def _handle_git(root: str, config: AgentConfig) -> None:
+    """Handle git commit and optional push."""
+    if not is_git_repo(root):
+        print("[GIT] Not a git repository. Skipping.")
+        return
+
+    print("\n[GIT] Staging and committing changes...")
+    commit_msg = f"agent: {config.task[:50]}"
+    result = git_commit(root, commit_msg)
+    print(f"  {result}")
+
+    if config.auto_push:
+        print("[GIT] Pushing to remote...")
+        push_result = git_push(root)
+        print(f"  {push_result}")
+    else:
+        print("[GIT] Auto-push disabled. Use --auto-push to enable.")
 
 
 if __name__ == "__main__":

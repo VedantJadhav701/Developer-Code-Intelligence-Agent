@@ -1,0 +1,1 @@
+Fix the divide function in calculator.py to raise ValueError when dividing by zero, so test_divide_by_zero passes.

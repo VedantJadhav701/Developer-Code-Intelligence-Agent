@@ -1,5 +1,8 @@
 """
 Structured JSON logger — writes every agent step to logs/run.json.
+
+Tracks: thoughts, actions, observations, reviews, test results,
+latency, model info, and benchmark performance.
 """
 
 from __future__ import annotations
@@ -29,6 +32,10 @@ class AgentLogger:
         review: str,
         test_result: str,
         status: str,
+        *,
+        latency: float = 0.0,
+        model: str = "",
+        patch_summary: str = "",
     ) -> None:
         """Log a complete agent iteration step."""
         entry = {
@@ -39,6 +46,9 @@ class AgentLogger:
             "observation": observation[:1000],
             "review": review,
             "test_result": test_result[:1000],
+            "latency": f"{latency:.2f}s" if latency else "",
+            "model": model,
+            "patch": patch_summary,
             "status": status,
         }
         self._entries.append(entry)
@@ -73,7 +83,12 @@ class AgentLogger:
         print("=" * 60)
         print(f"  THOUGHT:     {entry['thought'][:200]}")
         print(f"  ACTION:      {entry['action'][:200]}")
-        print(f"  OBSERVATION: {entry['observation'][:1000]}")
-        print(f"  REVIEW:      {entry['review'][:200]}")
+        print(f"  OBSERVATION: {entry['observation'][:500]}")
+        if entry.get("review"):
+            print(f"  REVIEW:      {entry['review'][:200]}")
+        if entry.get("patch"):
+            print(f"  PATCH:       {entry['patch'][:200]}")
+        if entry.get("latency"):
+            print(f"  LATENCY:     {entry['latency']}")
         print(f"  TEST RESULT: {entry['test_result'][:200]}")
         print("=" * 60)

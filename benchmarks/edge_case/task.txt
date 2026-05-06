@@ -1,0 +1,1 @@
+Fix the process_batch function in batch.py to handle empty lists without crashing, so all tests pass.
