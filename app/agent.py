@@ -34,6 +34,7 @@ from tools.test_runner import run_tests
 from tools.linter import lint_code
 from tools.git_tools import git_diff, git_status
 from tools.semantic_search import semantic_search, build_index, get_relevant_chunks
+from tools.surgical_patcher import apply_surgical_patch
 from utils.logger import AgentLogger
 from utils.metrics import RunMetrics, Timer
 
@@ -47,6 +48,8 @@ You are a coding agent. Your task:
 Project root: {project_root}
 Current step: {step}/{max_steps}
 Previous attempts: {attempts}
+
+{plan_context}
 
 {history_summary}
 
@@ -63,11 +66,11 @@ Decide the SINGLE next action. Choose ONE:
 - git_diff
 
 STRATEGY:
-1. If you don't know where the bug is, use 'run_tests' first.
-2. Use 'semantic_search' to find relevant code by meaning.
-3. Use 'search_code' with a SHORT keyword to find code.
-4. Use 'read_file' to understand the code before fixing.
-5. Use 'lint_code' to find syntax errors.
+1. START by using 'run_tests' or 'search_code' to find the bug.
+2. USE 'read_file' to see the code before you try to fix it.
+3. If 'run_tests' fails, FOCUS on the functions listed in 'FAILING FUNCTIONS DETECTED'.
+4. USE 'surgical_patch' for precise logic fixes. Format: surgical_patch: file.py | <SEARCH> | <REPLACE>
+5. If stagnant for >1 steps, PIVOT to a different file or function.
 
 Reply in this EXACT format (two lines only):
 THOUGHT: <your reasoning>
@@ -85,14 +88,17 @@ CURRENT CODE:
 
 {retrieval_context}
 
-RULES:
-1. Output the COMPLETE corrected file content from the VERY FIRST LINE to the LAST.
-2. DO NOT omit any functions, classes, or imports, even if they don't need fixing.
-3. ONLY fix what is needed — do NOT add new functions, classes, or imports.
-4. Keep the SAME file structure and function signatures.
-5. If a test expects a specific error message, use EXACTLY that message.
-6. Output ONLY Python code — no markdown fences, no explanations.
-7. Your output must be valid Python code that can be run immediately.
+TASK: {task}
+FILE: {file_path}
+
+{error_context}
+
+{retrieval_context}
+
+CURRENT CODE:
+{file_content}
+
+Fix the bug. Output ONLY the COMPLETE Python code.
 """
 
 EXTRACT_ACTION_PATTERN = re.compile(
@@ -228,7 +234,7 @@ class Agent:
         # STEP 2 — EXECUTE ACTION → OBSERVATION
         observation = self._execute_action(action_name, action_arg)
         self.state.last_observation = observation
-        self.state.observations.append(observation[:500])
+        self.state.observations.append(observation[:2000])
 
         # STEP 3 — GENERATE FIX (if we have a file in context)
         code_fix = ""
@@ -252,9 +258,10 @@ class Agent:
                 observation += f"\n{patch_summary}"
 
         # STEP 6 — RUN TESTS
-        test_exit, test_output = run_tests(self.state.working_root or self.state.project_root)
+        test_exit, test_output, failing = run_tests(self.state.working_root or self.state.project_root)
         self.state.test_exit_code = test_exit
         self.state.test_output = test_output
+        self.state.failing_functions = failing
 
         # Determine success
         if test_exit == 0 and "collected 0 items" not in test_output:
@@ -289,10 +296,27 @@ class Agent:
     # ── Retrieval ────────────────────────────────────────────────────────
 
     def _retrieve_context(self) -> None:
-        """Retrieve relevant code chunks for the current task."""
-        chunks = get_relevant_chunks(self.state.task, top_k=3)
-        if chunks:
-            self.memory.add_retrieval(chunks)
+        """Retrieve relevant code chunks for the current task, prioritizing failures."""
+        query_text = self.state.task
+        if self.state.failing_functions:
+            query_text += " " + " ".join(self.state.failing_functions)
+        
+        chunks = get_relevant_chunks(query_text, top_k=5)
+        
+        # Prioritize chunks that mention failing functions explicitly
+        if self.state.failing_functions:
+            prioritized = []
+            others = []
+            for chunk in chunks:
+                if any(func in chunk.content for func in self.state.failing_functions):
+                    prioritized.append(chunk)
+                else:
+                    others.append(chunk)
+            chunks = prioritized + others
+            
+        self.state.retrieved_chunks = chunks[:3]
+        for chunk in chunks[:3]:
+            self.memory.add_chunk(chunk)
 
     def _get_retrieval_context(self) -> str:
         """Format retrieved context for prompts."""
@@ -307,6 +331,9 @@ class Agent:
         """Ask the LLM to decide the next action."""
         history_summary = self._format_history()
         retrieval_context = self._get_retrieval_context()
+        plan_context = ""
+        if self.state.plan:
+            plan_context = f"CURRENT PLAN:\n{self.state.plan.get('raw_plan', 'No plan available')}"
 
         prompt = THOUGHT_PROMPT.format(
             task=self.state.task,
@@ -316,6 +343,7 @@ class Agent:
             attempts=self.state.attempts,
             history_summary=history_summary,
             retrieval_context=retrieval_context,
+            plan_context=plan_context,
         )
 
         response = query(prompt)
@@ -339,11 +367,19 @@ class Agent:
         action_arg = action_arg.strip('"').strip("'")
 
         # Dedup: if same action tried before, try alternate
-        if action_name == "search_code" and self._already_tried(action_name, action_arg):
-            file_hint = self._extract_filename_from_task()
-            if file_hint:
-                action_name, action_arg = "read_file", file_hint
-                thought = f"Search already tried. Reading {file_hint} directly."
+        if self._already_tried(action_name, action_arg):
+            # If we keep trying run_tests/search_code, force read_file if possible
+            if action_name in ("run_tests", "search_code", "semantic_search"):
+                file_hint = self._extract_filename_from_task() or self._extract_file_from_plan()
+                if file_hint:
+                    action_name, action_arg = "read_file", file_hint
+                    thought = f"Action {action_name} already tried. Forcing read_file on {file_hint}."
+                elif self.state.current_file:
+                    action_name, action_arg = "read_file", self.state.current_file
+                    thought = f"Action {action_name} already tried. Reading current file again."
+                else:
+                    action_name, action_arg = "list_files", "."
+                    thought = f"Action {action_name} already tried. Listing files to find something new."
 
         return thought, action_name, action_arg
 
@@ -393,10 +429,28 @@ class Agent:
             return f"[OK] Targeting {path} for writing."
 
         elif action_name == "run_tests":
-            exit_code, output = run_tests(root)
-            self.state.test_exit_code = exit_code
-            self.state.test_output = output
-            return output
+            code, out, failing = run_tests(root, action_arg)
+            self.state.test_output = out
+            self.state.failing_functions = failing
+            
+            # Detect stagnation
+            if out == self.state.last_test_output and out:
+                self.state.stagnant_steps += 1
+            else:
+                self.state.stagnant_steps = 0
+            self.state.last_test_output = out
+            
+            return out
+
+        elif action_name == "surgical_patch":
+            # Expected arg: "file.py | SEARCH_TEXT | REPLACE_TEXT"
+            parts = action_arg.split("|")
+            if len(parts) < 3:
+                return "[ERROR] surgical_patch requires format: file | SEARCH | REPLACE"
+            path = self._resolve_path(parts[0].strip())
+            search = parts[1].strip()
+            replace = parts[2].strip()
+            return apply_surgical_patch(path, search, replace)
 
         elif action_name == "lint_code":
             path = self._resolve_path(action_arg)
@@ -423,7 +477,7 @@ class Agent:
         """Ask the LLM to generate a code fix for the current file."""
         error_context = ""
         if self.state.test_output and self.state.test_exit_code != 0:
-            error_context = f"TEST ERRORS:\n{self.state.test_output[:1000]}"
+            error_context = f"TEST ERRORS (FIX THESE):\n{self.state.test_output[:2000]}"
 
         retrieval_context = self._get_retrieval_context()
 
@@ -477,8 +531,18 @@ class Agent:
                 f"-> {h.get('status', h.get('test_status', 'info'))}"
             )
 
-        if self.state.test_output and self.state.test_exit_code != 0:
-            lines.append(f"\nLAST TEST ERROR:\n{self.state.test_output[:500]}")
+        if self.state.failing_functions:
+            lines.append(f"\nFAILING FUNCTIONS DETECTED: {', '.join(self.state.failing_functions)}")
+            lines.append("Look for these functions in the codebase. They are likely where the bug is.")
+
+        if self.state.stagnant_steps >= 1:
+            lines.append("\n[CRITICAL PIVOT] YOUR PREVIOUS FIXES ARE NOT WORKING.")
+            if self.state.failing_functions:
+                lines.append(f"STOP focusing on the original task name. FOCUS EXCLUSIVELY ON THESE FAILURES: {', '.join(self.state.failing_functions)}")
+            lines.append("Read the code of the FAILING functions. The bug is there, not where you are currently looking.")
+
+        if self.state.test_output:
+            lines.append(f"\nLAST TEST ERROR:\n{self.state.test_output[:1500]}")
 
         return "\n".join(lines)
 
@@ -504,15 +568,45 @@ class Agent:
 
     @staticmethod
     def _strip_code_fences(text: str) -> str:
-        """Remove markdown code fences from LLM output."""
-        text = text.strip()
-        if text.startswith("```"):
-            lines = text.splitlines()
-            lines = lines[1:]
-            if lines and lines[-1].strip() == "```":
-                lines = lines[:-1]
-            text = "\n".join(lines)
-        return text
+        """Extract Python code from LLM response, stripping markdown and commentary."""
+        if not text:
+            return ""
+
+        # 1. Look for ```python ... ```
+        match = re.search(r"```python\s+(.*?)\s+```", text, re.DOTALL | re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+
+        # 2. Look for ``` ... ```
+        match = re.search(r"```\s+(.*?)\s+```", text, re.DOTALL)
+        if match:
+            return match.group(1).strip()
+
+        # 3. Aggressive extraction: find first import/def/class and last line of code
+        lines = text.splitlines()
+        start_idx = 0
+        found_start = False
+        for i, line in enumerate(lines):
+            if re.match(r"^\s*(import|from|def|class|#|@)", line):
+                start_idx = i
+                found_start = True
+                break
+        
+        if not found_start:
+            return text.strip()
+
+        # Strip trailing non-code (explanations)
+        end_idx = len(lines)
+        for i in range(len(lines) - 1, start_idx, -1):
+            line = lines[i].strip()
+            # If line ends with typical code markers, it's likely code
+            if line and (line.endswith(":") or line.endswith(")") or line.endswith("]") or 
+                         line.endswith("}") or line.endswith("'") or line.endswith('"') or 
+                         line in {"True", "False", "None"} or re.match(r"^\s*#", line)):
+                end_idx = i + 1
+                break
+            
+        return "\n".join(lines[start_idx:end_idx]).strip()
 
     def _extract_filename_from_task(self) -> str:
         """Extract a .py filename mentioned in the task description."""
@@ -531,9 +625,20 @@ class Agent:
                  ("the", "that", "this", "with", "from", "should", "when")]
         return words[0] if words else "def"
 
+    def _extract_file_from_plan(self) -> str:
+        """Extract the first likely file from the plan."""
+        if self.state.plan and self.state.plan.get("likely_files"):
+            files = self.state.plan.get("likely_files")
+            if isinstance(files, list) and files:
+                return files[0]
+            if isinstance(files, str):
+                return files.split(",")[0].strip()
+        return ""
+
     def _already_tried(self, action_name: str, action_arg: str) -> bool:
-        """Check if we already tried this exact action."""
-        for h in self.state.history:
+        """Check if we already tried this exact action in the last 2 steps."""
+        # Look back at last 2 steps to avoid immediate loops
+        for h in self.state.history[-2:]:
             if h.get("action") == action_name and h.get("action_arg") == action_arg:
                 return True
         return False

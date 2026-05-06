@@ -22,6 +22,10 @@ class AgentState:
     project_root: str = "."
 
     # --- iteration tracking ---
+    # Progress tracking
+    last_test_output: str = ""
+    stagnant_steps: int = 0
+    failing_functions: list[str] = field(default_factory=list)
     current_step: int = 0
     max_steps: int = 5
     status: str = "pending"  # pending | running | success | fail

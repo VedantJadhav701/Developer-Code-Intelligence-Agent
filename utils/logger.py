@@ -43,9 +43,9 @@ class AgentLogger:
             "step": step,
             "thought": thought,
             "action": action,
-            "observation": observation[:1000],
+            "observation": observation[:2000],
             "review": review,
-            "test_result": test_result[:1000],
+            "test_result": test_result[:2000],
             "latency": f"{latency:.2f}s" if latency else "",
             "model": model,
             "patch": patch_summary,
@@ -81,14 +81,14 @@ class AgentLogger:
         print("\n" + "=" * 60)
         print(f"  STEP {entry['step']}  |  STATUS: {entry['status']}")
         print("=" * 60)
-        print(f"  THOUGHT:     {entry['thought'][:200]}")
-        print(f"  ACTION:      {entry['action'][:200]}")
-        print(f"  OBSERVATION: {entry['observation'][:500]}")
+        print(f"  THOUGHT:     {entry['thought']}")
+        print(f"  ACTION:      {entry['action']}")
+        print(f"  OBSERVATION: {entry['observation'][:1500]}")
         if entry.get("review"):
-            print(f"  REVIEW:      {entry['review'][:200]}")
+            print(f"  REVIEW:      {entry['review']}")
         if entry.get("patch"):
             print(f"  PATCH:       {entry['patch'][:200]}")
         if entry.get("latency"):
             print(f"  LATENCY:     {entry['latency']}")
-        print(f"  TEST RESULT: {entry['test_result'][:200]}")
+        print(f"  TEST RESULT: {entry['test_result'][:1500]}")
         print("=" * 60)

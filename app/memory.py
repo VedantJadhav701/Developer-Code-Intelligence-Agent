@@ -272,6 +272,10 @@ class WorkingMemory:
                 self.retrieved_chunks.append(c)
                 seen.add(c.chunk_hash)
 
+    def add_chunk(self, chunk: CodeChunk) -> None:
+        """Add a single chunk to memory."""
+        self.add_retrieval([chunk])
+
     def get_context(self, max_chars: int = 3000) -> str:
         """Assemble compressed context from retrieved chunks."""
         parts: list[str] = []
