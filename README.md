@@ -111,12 +111,11 @@ devagent run --task "Fix the divide-by-zero bug" --root ./demo_project
 
 ### ✨ New: Trust & Safety
 
-#### 🛡️ Confidence Scoring (v3.2.1)
-DevAgent now provides a **Confidence Score (0-100%)** for every fix. It evaluates:
-- **Test Results**: Passing tests give the highest confidence.
-- **Surgical Precision**: Targeted patches are more reliable than full rewrites.
-- **Self-Review**: Internal LLM critique ensures logic sanity.
-- **Linting**: Code is verified for syntax errors.
+#### 🛡️ Reliability Hardening (v3.2.1+)
+DevAgent is now built for **Enterprise-grade reliability** in complex projects:
+- **Path Anchoring**: Automatically corrects "root hallucinations." If the agent targets a file in a subdirectory but assumes it's at the root, the system auto-anchors it to the correct project location.
+- **Forensic Test Detection**: Built-in intelligence to "see through" environment noise. It detects successful test runs even if unrelated parts of the repository have collection errors.
+- **Confidence Scoring**: Every fix is graded (0-100%) based on test results, surgical precision, and self-review quality.
 
 #### 🕹️ Interactive Mode
 Run with `--interactive` (or `-i`) to review diffs before they are applied to your project.
