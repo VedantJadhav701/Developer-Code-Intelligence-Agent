@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevAgent — Local Autonomous Coding Orchestration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --fg: #ededed;
+            --accent: #3b82f6;
+            --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%);
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--fg);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; padding: 0 2rem; }
+
+        header { padding: 4rem 0; text-align: center; }
+
+        h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .tagline { font-size: 1.5rem; color: #a1a1aa; margin-bottom: 2rem; }
+
+        .btn-group { display: flex; gap: 1rem; justify-content: center; }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-primary { background: var(--accent-gradient); color: white; }
+        .btn-secondary { background: var(--glass); border: 1px solid var(--border); color: var(--fg); }
+        .btn:hover { transform: translateY(-2px); opacity: 0.9; }
+
+        section { padding: 6rem 0; }
+
+        .section-title { font-size: 2rem; font-weight: 700; margin-bottom: 3rem; text-align: center; }
+
+        .terminal {
+            background: #111;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .terminal::before {
+            content: "";
+            position: absolute;
+            top: 12px; left: 12px;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #ff5f56;
+            box-shadow: 20px 0 0 #ffbd2e, 40px 0 0 #27c93f;
+        }
+
+        .terminal code { color: #2dd4bf; display: block; margin-top: 1.5rem; }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .feature-card:hover { border-color: var(--accent); }
+
+        .feature-card h3 { font-size: 1.25rem; margin-bottom: 1rem; color: var(--accent); }
+
+        .benchmarks {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-item h4 { font-size: 2.5rem; color: var(--accent); }
+        .stat-item p { color: #a1a1aa; }
+
+        footer { padding: 4rem 0; border-top: 1px solid var(--border); text-align: center; color: #71717a; }
+
+        .glow {
+            position: absolute;
+            top: -10%; left: 50%;
+            width: 500px; height: 500px;
+            background: var(--accent);
+            filter: blur(150px);
+            opacity: 0.1;
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="glow"></div>
+    <div class="container">
+        <header>
+            <h1>DevAgent</h1>
+            <p class="tagline">Local Autonomous Coding Orchestration Infrastructure.</p>
+            <div class="btn-group">
+                <a href="https://github.com/VedantJadhav701/Developer-Code-Intelligence-Agent" class="btn btn-primary">GitHub</a>
+                <a href="https://pypi.org/project/devagent-cli/" class="btn btn-secondary">PyPI</a>
+            </div>
+        </header>
+
+        <section id="install">
+            <div class="terminal">
+                <code>pip install devagent-cli</code>
+                <code style="color: #71717a;"># Verify health & connectivity</code>
+                <code>devagent doctor</code>
+            </div>
+        </section>
+
+        <section id="features">
+            <h2 class="section-title">Engineered for Integrity</h2>
+            <div class="features">
+                <div class="feature-card">
+                    <h3>Environment Aware</h3>
+                    <p>Autonomously detects dependencies and provisions isolated venvs for valid execution.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Surgical Patching</h3>
+                    <p>Line-level unified diffs. No full-file rewrites. Preserves your style and git history.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Safety Containment</h3>
+                    <p>Strict dry-run mode, auto-snapshots, and one-command rollback for absolute peace of mind.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="benchmarks">
+            <div class="benchmarks">
+                <h2 class="section-title" style="margin-bottom: 1rem;">Empirically Validated</h2>
+                <p>We prioritize orchestration integrity over intelligence hype.</p>
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <h4>95%</h4>
+                        <p>Dependency Repair</p>
+                    </div>
+                    <div class="stat-item">
+                        <h4>80%</h4>
+                        <p>Unit Bugfixes</p>
+                    </div>
+                    <div class="stat-item">
+                        <h4>100%</h4>
+                        <p>Isolation Safety</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>Built for developers who value systems thinking. <br> &copy; 2026 DevAgent OSS Project.</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -187,7 +187,7 @@ def cmd_run(args):
             result = sandbox.apply_to_project()
             if result["applied"]:
                 for f in result["applied"]:
-                    console.print(f"  [green]✓[/green] {f}")
+                    console.print(f"  [green]OK[/green] {f}")
         sandbox.destroy()
 
     # Git operations
@@ -245,6 +245,14 @@ def cmd_doctor(args):
         checks.append(("[green]OK[/green]", "FAISS available"))
     except:
         checks.append(("[yellow]WARN[/yellow]", "FAISS not found (keyword search fallback active)"))
+
+    # Venv Check
+    try:
+        import venv
+        import ensurepip
+        checks.append(("[green]OK[/green]", "Virtual environment runtime (venv + pip) available"))
+    except:
+        checks.append(("[red]FAIL[/red]", "venv or ensurepip missing (required for Environment Isolation)"))
 
     for status, msg in checks:
         console.print(f" {status} {msg}")
