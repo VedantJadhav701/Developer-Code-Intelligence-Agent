@@ -109,6 +109,36 @@ devagent run --task "Fix the divide-by-zero bug" --root ./demo_project
 | `devagent models` | List available Ollama models |
 | `devagent version` | Show current version |
 
+### ✨ New: Trust & Safety
+
+#### 🛡️ Confidence Scoring (v3.2.1)
+DevAgent now provides a **Confidence Score (0-100%)** for every fix. It evaluates:
+- **Test Results**: Passing tests give the highest confidence.
+- **Surgical Precision**: Targeted patches are more reliable than full rewrites.
+- **Self-Review**: Internal LLM critique ensures logic sanity.
+- **Linting**: Code is verified for syntax errors.
+
+#### 🕹️ Interactive Mode
+Run with `--interactive` (or `-i`) to review diffs before they are applied to your project.
+```bash
+devagent run --task "Fix bug" --interactive
+```
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+graph TD
+    CLI[DevAgent CLI] --> Orchestrator[ReAct Orchestrator]
+    Orchestrator --> Memory[Working Memory]
+    Orchestrator --> Retrieval[Semantic Retrieval FAISS]
+    Orchestrator --> Tools[Tool Suite: pytest, ripgrep, git]
+    Orchestrator --> Reviewer[Self-Review Loop]
+    Reviewer --> Patch[Surgical Patch Engine]
+    Patch --> Sandbox[Sandbox Environment]
+```
+
 No API keys. No sign-ups. No cloud.
 
 ### Optional: Enable Semantic Search

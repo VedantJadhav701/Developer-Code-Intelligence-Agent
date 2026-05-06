@@ -70,6 +70,27 @@ class AgentState:
     actions: list[str] = field(default_factory=list)
     observations: list[str] = field(default_factory=list)
 
+    # -- Trust & Confidence --
+    confidence_score: float = 0.0
+    confidence_reasons: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-serialisable snapshot of the current state."""
+        return {
+            "task": self.task,
+            "project_root": self.project_root,
+            "current_step": self.current_step,
+            "max_steps": self.max_steps,
+            "status": self.status,
+            "current_file": self.current_file,
+            "test_output": self.test_output[:500] if self.test_output else "",
+            "test_exit_code": self.test_exit_code,
+            "attempts": self.attempts,
+            "history_length": len(self.history),
+            "patches_applied": len(self.patches_applied),
+            "sandbox_active": self.sandbox_active,
+        }
+
     def snapshot(self) -> dict[str, Any]:
         """Return a JSON-serialisable snapshot of the current state."""
         return {

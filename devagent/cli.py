@@ -118,15 +118,39 @@ def cmd_run(args):
     table.add_row("Status", final_state.status.upper())
     table.add_row("Steps", f"{final_state.current_step}/{final_state.max_steps}")
     table.add_row("Time", f"{elapsed:.1f}s")
+    
+    # Confidence Score with color coding
+    conf_color = "green" if final_state.confidence_score > 0.8 else "yellow" if final_state.confidence_score > 0.5 else "red"
+    table.add_row("Confidence", f"[{conf_color}]{final_state.confidence_score * 100:.0f}%[/{conf_color}]")
+    
     if final_state.current_file:
         table.add_row("Last File", final_state.current_file)
     table.add_row("Patches", str(len(final_state.patches_applied)))
     
     console.print("\n", table)
 
+    # Show confidence reasons
+    if final_state.confidence_reasons:
+        console.print("\n[bold]Confidence Breakdown:[/bold]")
+        for reason in final_state.confidence_reasons:
+            console.print(f"  [dim]• {reason}[/dim]")
+
     # Sandbox apply
     if sandbox and sandbox.is_active:
         if final_state.status == "success":
+            if getattr(args, "interactive", False):
+                console.print("\n[bold yellow][INTERACTIVE][/bold yellow] Reviewing changes...")
+                # Show diff for each applied patch
+                for i, patch in enumerate(final_state.patches_applied):
+                    console.print(f"\n[bold]Patch #{i+1}[/bold] for [cyan]{patch.get('file', 'unknown')}[/cyan]:")
+                    console.print(f"[dim]{patch.get('diff', 'No diff available')}[/dim]")
+                
+                choice = console.input("\nApply these changes to the real project? [y/N]: ").lower()
+                if choice != 'y':
+                    console.print("[bold red]Changes rejected.[/bold red] Sandbox will be destroyed.")
+                    sandbox.destroy()
+                    return 1
+
             console.print("\n[bold yellow][SANDBOX][/bold yellow] Applying changes to real project...")
             result = sandbox.apply_to_project()
             if result["applied"]:
@@ -222,6 +246,7 @@ def main():
     run_parser.add_argument("--sandbox", action="store_true", help="Run in sandbox")
     run_parser.add_argument("--auto-commit", action="store_true", help="Auto-commit on success")
     run_parser.add_argument("--auto-push", action="store_true", help="Auto-push after commit")
+    run_parser.add_argument("--interactive", "-i", action="store_true", help="Review changes before applying")
     run_parser.add_argument("--verbose", action="store_true", help="Verbose output")
 
     # Command: benchmark

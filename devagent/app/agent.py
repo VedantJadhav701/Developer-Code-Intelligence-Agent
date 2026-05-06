@@ -170,6 +170,7 @@ class Agent:
 
             if step_result == "success":
                 self.state.status = "success"
+                self._calculate_confidence()
                 self.metrics.finalize()
                 self.logger.log_event("agent_complete", {
                     "status": "success", "steps": step,
@@ -177,9 +178,9 @@ class Agent:
                 })
                 print("\n[OK]  AGENT COMPLETED SUCCESSFULLY")
                 return self.state
-
         # Exhausted all iterations
         self.state.status = "fail"
+        self._calculate_confidence()
         self.metrics.finalize()
         self.logger.log_event("agent_complete", {
             "status": "fail", "steps": self.state.max_steps,
@@ -187,6 +188,45 @@ class Agent:
         })
         print("\n[FAIL]  AGENT FAILED -- max iterations reached")
         return self.state
+
+    def _calculate_confidence(self) -> float:
+        """Calculate a trust score (0.0 - 1.0) for the final result."""
+        score = 0.0
+        reasons = []
+
+        # 1. Test Success (+0.50)
+        if self.state.test_exit_code == 0 and "collected 0 items" not in self.state.test_output:
+            score += 0.50
+            reasons.append("Tests passed successfully")
+        elif self.state.test_exit_code == 0:
+             reasons.append("No tests found to validate")
+        else:
+            reasons.append("Tests failed or not fully resolved")
+
+        # 2. Surgical Precision (+0.20)
+        # Check if any patch was a surgical_patch (which is more precise)
+        surgical_used = any("surgical_patch" in h.get("action", "") for h in self.state.history)
+        if surgical_used:
+            score += 0.20
+            reasons.append("Used precise surgical patching")
+        else:
+            reasons.append("Used full-file replacement (less precise)")
+
+        # 3. Self-Review Reliability (+0.15)
+        # If last review was approved on first try
+        if self.state.last_review and "APPROVED" in self.state.last_review.upper():
+            score += 0.15
+            reasons.append("Fix passed internal self-review")
+
+        # 4. Step Efficiency (+0.15)
+        # Fewer steps means higher confidence in the solution's clarity
+        if self.state.current_step <= self.state.max_steps // 2:
+            score += 0.15
+            reasons.append("Solution reached efficiently")
+
+        self.state.confidence_score = min(1.0, score)
+        self.state.confidence_reasons = reasons
+        return self.state.confidence_score
 
     # ── Phase 0: Initialization ──────────────────────────────────────────
 
