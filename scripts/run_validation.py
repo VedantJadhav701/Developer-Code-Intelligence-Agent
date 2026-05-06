@@ -22,7 +22,7 @@ class ValidationRunner:
         
     def run_test(self, repo_url: str, task: str, category: str):
         repo_name = repo_url.split("/")[-1].replace(".git", "")
-        test_dir = self.root / "validation" / category / repo_name
+        test_dir = self.root / "validation" / "repos" / category / repo_name
         
         console.print(f"\n[bold blue][VALIDATION][/bold blue] Testing: [cyan]{repo_name}[/cyan] in [yellow]{category}[/yellow]")
         
