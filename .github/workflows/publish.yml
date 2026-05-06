@@ -35,6 +35,7 @@ jobs:
         with:
           print-hash: true
           skip-existing: true
+          attestations: false
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
